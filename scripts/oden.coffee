@@ -12,6 +12,7 @@ token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
   robot.logger.info config()
+  fetch_online_users(robot)
 
   # 設定を表示する
   robot.hear /config/, (msg) =>
