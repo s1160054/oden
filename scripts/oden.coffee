@@ -4,15 +4,18 @@
 request = require('request')
 cronJob = require('cron').CronJob
 
+select_num   = process.env.SELECT_NUM || 1
+channel_name = process.env.CHANNEL    || "random"
+fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
+reset_cron    = process.env.RESET_CRON  || "*/20 * * * * *"
+token = process.env.HUBOT_SLACK_TOKEN
+
 module.exports = (robot) ->
-  select_num   = process.env.SELECT_NUM || 1
-  channel_name = process.env.CHANNEL    || "random"
-  fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
-  reset_cron    = process.env.RESET_CRON  || "*/30 * * * * *"
-  robot.logger.info "レビュワ: #{select_num}人"
-  robot.logger.info "チャネル: #{channel_name}"
-  robot.logger.info "フェッチ間隔: #{fetch_cron}"
-  robot.logger.info "リセット間隔: #{reset_cron}"
+  robot.logger.info config()
+
+  # 設定を表示する
+  robot.hear /config/, (msg) =>
+    msg.send config().join('\n')
 
   # レビュー依頼する
   # 引数はPRのURL
@@ -40,32 +43,47 @@ module.exports = (robot) ->
 
   # fetch_cronごとに、オンラインユーザーを追加する
   new cronJob(fetch_cron, () ->
-    online_users = robot.brain.get('online_users') || []
-    robot.logger.info "List: #{online_users.join(', ')}"
-    token = process.env.HUBOT_SLACK_TOKEN
-    channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
-    request.get channels_list, (error, response, body) =>
-      data = JSON.parse(body)
-      channel = null
-      for channel in data.channels
-        channel = channel if channel.name == channel_name
-      user_ids = channel.members.sort -> Math.random()
-
-      for user_id in user_ids
-        do (user_id) ->
-          users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
-          request.get users_getPresence, (error, response, body) =>
-            data = JSON.parse(body)
-            if (data.presence == "active")
-              users_info = "https://slack.com/api/users.info?token=#{token}&user=#{user_id}&pretty=1"
-              request.get users_info, (error, response, body) =>
-                data = JSON.parse(body)
-                user_name = data.user.name
-                online_users = robot.brain.get('online_users') || []
-                robot.logger.info "Add:  #{user_name}" if online_users.indexOf(user_name) == -1
-                online_users.push(user_name)
-                robot.brain.set('online_users', uniq(online_users))
+    fetch_online_users(robot)
   ).start()
+
+##################################################
+
+# 設定を配列で返す
+config = () ->
+  ["レビュワ: #{select_num}人",
+   "チャネル: #{channel_name}",
+   "フェッチ間隔: #{fetch_cron}",
+   "リセット間隔: #{reset_cron}"]
+
+# リストのオンラインユーザーを更新する
+fetch_online_users = (robot) ->
+  online_users = robot.brain.get('online_users') || []
+  robot.logger.info "List: #{online_users.join(', ')}"
+  channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
+  request.get channels_list, (error, response, body) =>
+    data = JSON.parse(body)
+    channel = null
+    for channel in data.channels
+      channel = channel if channel.name == channel_name
+    user_ids = channel.members.sort -> Math.random()
+    for user_id in user_ids
+      check_online(robot, user_id)
+
+# オンラインならリストに追加する
+check_online = (robot, user_id) ->
+  do (user_id) ->
+    users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
+    request.get users_getPresence, (error, response, body) =>
+      data = JSON.parse(body)
+      if (data.presence == "active")
+        users_info = "https://slack.com/api/users.info?token=#{token}&user=#{user_id}&pretty=1"
+        request.get users_info, (error, response, body) =>
+          data = JSON.parse(body)
+          user_name = data.user.name
+          online_users = robot.brain.get('online_users') || []
+          robot.logger.info "Add:  #{user_name}" if online_users.indexOf(user_name) == -1
+          online_users.push(user_name)
+          robot.brain.set('online_users', uniq(online_users))
 
 uniq = (ar) ->
   if ar.length == 0
