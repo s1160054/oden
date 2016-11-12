@@ -79,6 +79,7 @@ check_online = (robot, user_id) ->
         users_info = "https://slack.com/api/users.info?token=#{token}&user=#{user_id}&pretty=1"
         request.get users_info, (error, response, body) =>
           data = JSON.parse(body)
+          return if data.user.is_bot
           user_name = data.user.name
           online_users = robot.brain.get('online_users') || []
           robot.logger.info "Add:  #{user_name}" if online_users.indexOf(user_name) == -1
