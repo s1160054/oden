@@ -1,11 +1,18 @@
+# Description:
+#   レビュー依頼用Bot oden
+
 request = require('request')
 cronJob = require('cron').CronJob
 
 module.exports = (robot) ->
   select_num   = process.env.SELECT_NUM || 1
-  channel_name = process.env.CHANNEL_NAME || "random"
-  reset_sec    = process.env.RESET_SEC || 60
-  fetch_sec    = process.env.FETCH_SEC || 10
+  channel_name = process.env.CHANNEL    || "random"
+  fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
+  reset_cron    = process.env.RESET_CRON  || "*/30 * * * * *"
+  robot.logger.info "レビュワ: #{select_num}人"
+  robot.logger.info "チャネル: #{channel_name}"
+  robot.logger.info "フェッチ間隔: #{fetch_cron}"
+  robot.logger.info "リセット間隔: #{reset_cron}"
 
   # レビュー依頼する
   # 引数はPRのURL
@@ -25,14 +32,16 @@ module.exports = (robot) ->
     online_users = robot.brain.get('online_users') || []
     msg.send("オンライン: #{online_users.join(', ')}")
 
-  # ６０秒ごとに、オンラインユーザーをリセットする
-  new cronJob("*/#{reset_sec} * * * * *", () ->
+  # reset_cronごとに、オンラインユーザーをリセットする
+  new cronJob(reset_cron, () ->
     robot.brain.set('online_users', [])
     robot.logger.info "reset"
   ).start()
 
-  # １０秒ごとに、オンラインユーザーを追加する
-  new cronJob("*/#{fetch_sec} * * * * *", () ->
+  # fetch_cronごとに、オンラインユーザーを追加する
+  new cronJob(fetch_cron, () ->
+    online_users = robot.brain.get('online_users') || []
+    robot.logger.info "List: #{online_users.join(', ')}"
     token = process.env.HUBOT_SLACK_TOKEN
     channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
     request.get channels_list, (error, response, body) =>
@@ -52,7 +61,7 @@ module.exports = (robot) ->
               request.get users_info, (error, response, body) =>
                 data = JSON.parse(body)
                 user_name = data.user.name
-                robot.logger.info "オンライン: #{user_name}"
+                robot.logger.info "Add: #{user_name}"
                 online_users = robot.brain.get('online_users') || []
                 online_users.push(user_name)
                 robot.brain.set('online_users', uniq(online_users))
