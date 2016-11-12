@@ -13,42 +13,15 @@ module.exports = (robot) ->
     reject_idx = online_users.indexOf(my_name)
     online_users.splice(reject_idx, 1)
     if online_users.length < select_user_num
-      msg.send("アサインできるオンラインレビュワーが #{select_user_num} 以下です\n`reload_online_users`でオンラインユーザーを更新します")
+      msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
     random_fetch(online_users, select_user_num)
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします #{msg.match} \n from #{my_name}")
 
-  # DBのオンラインのユーザーを更新する
+  # オンラインのユーザーを表示
   robot.hear /online_users/, (msg) =>
-    robot.brain.set('online_users', [])
-    token = process.env.HUBOT_SLACK_TOKEN
-    current_channel_name ||= msg.message.room
-    channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
-    request.get channels_list, (error, response, body) =>
-      return msg.send('SlackAPI： channels_listの取得に失敗しました') if error or response.statusCode != 200
-      data = JSON.parse(body)
-      channel = null
-      for channel in data.channels
-        channel = channel if channel.name == current_channel_name
-      return msg.send('Hubot: チャネルが不明です') if channel == null
-      user_ids = channel.members.sort -> Math.random()
-
-      for user_id in user_ids
-        do (user_id) ->
-          users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
-          request.get users_getPresence, (error, response, body) =>
-            return msg.send('SlackAPI: users_getPresenceの取得に失敗しました') if error or response.statusCode != 200
-            data = JSON.parse(body)
-            if (data.presence == "active")
-              users_info = "https://slack.com/api/users.info?token=#{token}&user=#{user_id}&pretty=1"
-              request.get users_info, (error, response, body) =>
-                return msg.send('SlackAPI: users_infoの取得に失敗しました') if error or response.statusCode != 200
-                data = JSON.parse(body)
-                user_name = data.user.name
-                msg.send("オンライン: #{user_name}")
-                online_users = robot.brain.get('online_users') || []
-                online_users.push(user_name)
-                robot.brain.set('online_users', uniq(online_users))
+    online_users = robot.brain.get('online_users') || []
+    msg.send("オンライン: #{online_users.join(', ')}")
 
   # ６０秒ごとに、オンラインユーザーをリセットする
   new cronJob('*/60 * * * * *', () ->
