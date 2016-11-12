@@ -2,8 +2,10 @@ request = require('request')
 cronJob = require('cron').CronJob
 
 module.exports = (robot) ->
-  select_user_num = 1
-  current_channel_name = "random"
+  select_num   = process.env.SELECT_NUM || 1
+  channel_name = process.env.CHANNEL_NAME || "random"
+  reset_sec    = process.env.RESET_SEC || 60
+  fetch_sec    = process.env.FETCH_SEC || 10
 
   # レビュー依頼する
   # 引数はPRのURL
@@ -12,10 +14,10 @@ module.exports = (robot) ->
     my_name = msg.message.user.name
     reject_idx = online_users.indexOf(my_name)
     online_users.splice(reject_idx, 1)
-    if online_users.length < select_user_num
+    if online_users.length < select_num
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
-    random_fetch(online_users, select_user_num)
+    random_fetch(online_users, select_num)
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします #{msg.match} \n from #{my_name}")
 
   # オンラインのユーザーを表示
@@ -24,20 +26,20 @@ module.exports = (robot) ->
     msg.send("オンライン: #{online_users.join(', ')}")
 
   # ６０秒ごとに、オンラインユーザーをリセットする
-  new cronJob('*/60 * * * * *', () ->
+  new cronJob("*/#{reset_sec} * * * * *", () ->
     robot.brain.set('online_users', [])
     robot.logger.info "reset"
   ).start()
 
   # １０秒ごとに、オンラインユーザーを追加する
-  new cronJob('*/10 * * * * *', () ->
+  new cronJob("*/#{fetch_sec} * * * * *", () ->
     token = process.env.HUBOT_SLACK_TOKEN
     channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
     request.get channels_list, (error, response, body) =>
       data = JSON.parse(body)
       channel = null
       for channel in data.channels
-        channel = channel if channel.name == current_channel_name
+        channel = channel if channel.name == channel_name
       user_ids = channel.members.sort -> Math.random()
 
       for user_id in user_ids
