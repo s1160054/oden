@@ -61,8 +61,8 @@ module.exports = (robot) ->
               request.get users_info, (error, response, body) =>
                 data = JSON.parse(body)
                 user_name = data.user.name
-                robot.logger.info "Add: #{user_name}"
                 online_users = robot.brain.get('online_users') || []
+                robot.logger.info "Add:  #{user_name}" if !online_users.indexOf(user_name)
                 online_users.push(user_name)
                 robot.brain.set('online_users', uniq(online_users))
   ).start()
