@@ -1,4 +1,6 @@
 request = require('request')
+cronJob = require('cron').CronJob
+
 module.exports = (robot) ->
   select_user_num = 1
   current_channel_name = "random"
@@ -18,6 +20,7 @@ module.exports = (robot) ->
 
   # DBのオンラインのユーザーを更新する
   robot.hear /online_users/, (msg) =>
+    robot.brain.set('online_users', [])
     token = process.env.HUBOT_SLACK_TOKEN
     current_channel_name ||= msg.message.room
     channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
@@ -46,6 +49,39 @@ module.exports = (robot) ->
                 online_users = robot.brain.get('online_users') || []
                 online_users.push(user_name)
                 robot.brain.set('online_users', uniq(online_users))
+
+  # ６０秒ごとに、オンラインユーザーをリセットする
+  new cronJob('*/60 * * * * *', () ->
+    robot.brain.set('online_users', [])
+    robot.logger.info "reset"
+  ).start()
+
+  # １０秒ごとに、オンラインユーザーを追加する
+  new cronJob('*/10 * * * * *', () ->
+    token = process.env.HUBOT_SLACK_TOKEN
+    channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
+    request.get channels_list, (error, response, body) =>
+      data = JSON.parse(body)
+      channel = null
+      for channel in data.channels
+        channel = channel if channel.name == current_channel_name
+      user_ids = channel.members.sort -> Math.random()
+
+      for user_id in user_ids
+        do (user_id) ->
+          users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
+          request.get users_getPresence, (error, response, body) =>
+            data = JSON.parse(body)
+            if (data.presence == "active")
+              users_info = "https://slack.com/api/users.info?token=#{token}&user=#{user_id}&pretty=1"
+              request.get users_info, (error, response, body) =>
+                data = JSON.parse(body)
+                user_name = data.user.name
+                robot.logger.info "オンライン: #{user_name}"
+                online_users = robot.brain.get('online_users') || []
+                online_users.push(user_name)
+                robot.brain.set('online_users', uniq(online_users))
+  ).start()
 
 uniq = (ar) ->
   if ar.length == 0
