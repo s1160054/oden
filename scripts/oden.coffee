@@ -28,7 +28,7 @@ module.exports = (robot) ->
   robot.hear 'pr', (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
-    for name in [my_name, super_user]
+    for name in [super_user, my_name]
       reject_idx = online_users.indexOf(name)
       online_users.splice(reject_idx, 1)
     if online_users.length < select_num
