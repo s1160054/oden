@@ -20,6 +20,10 @@ module.exports = (robot) ->
   robot.hear /config/, (msg) =>
     msg.send config().join('\n')
 
+  # ヘルプを表示する
+  robot.hear /helps/, (msg) =>
+    msg.send help().join('\n')
+
   # レビュー依頼する
   robot.hear /https:\/\/github.com\/.+\/.+\/pull\/\d+/, (msg) =>
     online_users = get(robot, 'online_users')
@@ -87,6 +91,15 @@ config = () ->
    "オンラインユーザー Add:   #{fetch_cron}",
    "オンラインユーザー Reset: #{reset_cron}",
    "除外ユーザー       Reset: #{reset_cron}",]
+
+# ヘルプを配列で返す
+help = () ->
+  ["`users` \n レビュー依頼が可能なユーザーを表示\n最近オンライン＆rejectsに含まれていないユーザーです",
+   "`user+hoge,piyo,tama` \n hoge,piyo,tamaをレビュー依頼可能なユーザーに追加する",
+   "`user-piyo,tama` \n piyo,tamaをレビュワーに選ばないようにする\n１日毎に自動リセットされます",
+   "`rejects` \n レビュワー除外リストを表示する",
+   "`config` \n botの設定を表示する",
+   "`helps` \n このヘルプを表示する"]
 
 # リストのユーザーを更新する
 fetch_online_users = (robot) ->
