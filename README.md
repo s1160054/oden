@@ -10,23 +10,26 @@
  - それぞれのリストはSlack上のメッセージで追加削除できます
 
 ## Configuration
-
- - CHANNEL - チャネル名
- - SELECT_NUM - レビューに必要な人数 : 2
- - FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定 :  "*/1  *    * * *"
- - REJECT_CRON - レビュー依頼不能なユーザーのリストをリセットする間隔をCronで指定 "0    */24 * * *"
- - RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定 : "0    */3  * * *"
- - SUPER_USER
+|Config Variable| Default value | Description|
+|---|---|---|
+| CHANNEL | "random" | レビュワーのいるチャネル名 | 
+| SELECT_NUM | 2 | レビューに必要な人数 |
+| FETCH_CRON | "*/1  *    * * *" => １分毎 |  レビュー依頼可能なユーザーを更新する間隔をCronで指定 |
+| REJECT_CRON | "0    0 * * *" => 毎日０時 | レビュー依頼不能なユーザーをリセットする間隔をCronで指定 |
+| RESET_CRON |  "0    */3  * * *" => ３時間毎 | レビュー依頼可能なユーザーをリセットする間隔をCronで指定 |
+| SUPER_USER | | |
 
 ## Commands
 
- - pr - レビュワーを選ぶ
- - users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
- - user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
- - user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
- - rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
- - config - botの設定を表示する
- - help - このヘルプを表示する
+| Cmd | Description|
+|---|---|
+| pr | レビュワーを選ぶ |
+| users | レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー) |
+| user+(.*) | レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット) |
+| user-(.*) | レビュワーに選ばないようにする(REJECT_CRONごとにリセット) |
+| rejects | レビュー不可リストを表示する(REJECT_CRONごとにリセット) |
+| config | botの設定を表示する |
+| help | ヘルプを表示する |
 
 ## Running oden Locally
 
