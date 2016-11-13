@@ -9,7 +9,6 @@ channel_name = process.env.CHANNEL    || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
 reset_cron    = process.env.RESET_CRON  || "*/20 * * * * *"
 token = process.env.HUBOT_SLACK_TOKEN
-keep_alive_sec = 0
 
 module.exports = (robot) ->
   robot.logger.info config()
@@ -32,25 +31,32 @@ module.exports = (robot) ->
     random_fetch(online_users, select_num)
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします #{msg.match} \n from #{my_name}")
 
-  # オンラインのユーザーを表示
-  robot.hear /online_users/, (msg) =>
+  # ユーザーを表示
+  robot.hear /users/, (msg) =>
     online_users = robot.brain.get('online_users') || []
     msg.send("オンライン: #{online_users.join(', ')}")
 
-  # reset_cronごとに、オンラインユーザーをリセットする
+  # ユーザーをリストから除外する
+  robot.hear /reject_user/, (msg) =>
+    online_users = (robot.brain.get('online_users') || []).slice(0)
+    user = msg.match
+    reject_idx = online_users.indexOf(user)
+    online_users.splice(reject_idx, 1)
+    robot.brain.set('online_users', online_users)
+
+    reject_users = (robot.brain.get('reject_users') || []).slice(0)
+    robot.brain.set('reject_users', uniq(reject_users))
+    msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
+
+  # reset_cronごとに、ユーザーをリセットする
   new cronJob(reset_cron, () ->
     robot.brain.set('online_users', [])
     robot.logger.info "reset"
   ).start()
 
-  # fetch_cronごとに、オンラインユーザーを追加する
+  # fetch_cronごとに、ユーザーを追加する
   new cronJob(fetch_cron, () ->
     fetch_online_users(robot)
-  ).start()
-
-  # １秒おき
-  new cronJob("* * * * * *", () ->
-    robot.logger.info "keep alive #{keep_alive_sec++}"
   ).start()
 
   # 生存確認
@@ -66,7 +72,7 @@ config = () ->
    "フェッチ間隔: #{fetch_cron}",
    "リセット間隔: #{reset_cron}"]
 
-# リストのオンラインユーザーを更新する
+# リストのユーザーを更新する
 fetch_online_users = (robot) ->
   online_users = robot.brain.get('online_users') || []
   robot.logger.info "List: #{online_users.join(', ')}"
@@ -80,7 +86,7 @@ fetch_online_users = (robot) ->
     for user_id in user_ids
       check_online(robot, user_id)
 
-# オンラインならリストに追加する
+# リストに追加する
 check_online = (robot, user_id) ->
   do (user_id) ->
     users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
