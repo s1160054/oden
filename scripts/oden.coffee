@@ -24,8 +24,8 @@ module.exports = (robot) ->
   robot.hear /helps/, (msg) =>
     msg.send help().join('\n')
 
-  # レビュー依頼する
-  robot.hear /https:\/\/github.com\/.+\/.+\/pull\/\d+/, (msg) =>
+  # レビュワーを選ぶ
+  robot.hear 'pr', (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
     for name in [my_name, super_user]
@@ -35,7 +35,7 @@ module.exports = (robot) ->
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
     online_users = random_fetch(online_users, select_num)
-    msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします \n #{msg.match} \n from #{my_name}")
+    msg.send("@#{online_users.join(', @')}")
 
   # ユーザーをレビュワーリストから除外する
   robot.hear /user-(.*)/, (msg) =>
@@ -54,12 +54,12 @@ module.exports = (robot) ->
   # レビュワーリストを表示
   robot.hear /users/, (msg) =>
     online_users = get(robot, 'online_users')
-    msg.send("オンライン: #{online_users.join(', ')}")
+    msg.send("レビュー可能: #{online_users.join(', ')}")
 
   # リジェクトユーザーを表示
   robot.hear /rejects/, (msg) =>
     reject_users = get(robot, 'reject_users')
-    msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
+    msg.send("レビュー不可: #{reject_users.join(', ')}")
 
   # reject_cronごとに、ユーザーをリセットする
   new cronJob(reject_cron, () ->
@@ -86,18 +86,19 @@ module.exports = (robot) ->
 
 # 設定を配列で返す
 config = () ->
-  ["レビュワ: #{select_num}人",
-   "チャネル: #{channel_name}",
-   "オンラインユーザー Add:   #{fetch_cron}",
-   "オンラインユーザー Reset: #{reset_cron}",
-   "除外ユーザー       Reset: #{reset_cron}",]
+  ["レビュワ: `#{select_num}人`",
+   "チャネル: `#{channel_name}`",
+   "レビュワー Fetch: `#{fetch_cron}`",
+   "レビュワー Reset: `#{reset_cron}`",
+   "リジェクト Reset: `#{reset_cron}`",]
 
 # ヘルプを配列で返す
 help = () ->
-  ["`users` \n レビュー依頼が可能なユーザーを表示\n最近オンライン＆rejectsに含まれていないユーザーです",
+  ["`pr` \n レビュワーを選ぶ",
+   "`users` \n レビュー依頼が可能なユーザーを表示\n最近オンライン＆rejectsに含まれていないユーザーです",
    "`user+hoge,piyo,tama` \n hoge,piyo,tamaをレビュー依頼可能なユーザーに追加する",
    "`user-piyo,tama` \n piyo,tamaをレビュワーに選ばないようにする\n１日毎に自動リセットされます",
-   "`rejects` \n レビュワー除外リストを表示する",
+   "`rejects` \n レビュー不可リストを表示する",
    "`config` \n botの設定を表示する",
    "`helps` \n このヘルプを表示する"]
 
@@ -136,7 +137,7 @@ get = (robot, key) ->
     return (robot.brain.get(key) || []).slice(0)
 
 rm = (robot, key, value) ->
-    values = value.split(/[　・\s,]+/)
+    values = value.split(/[　・\s,、@]+/)
     arr = get(robot, key)
     for value in values
       reject_idx = arr.indexOf(value)
@@ -145,7 +146,7 @@ rm = (robot, key, value) ->
     return arr
 
 add = (robot, key, value) ->
-    values = value.split(/[　・\s,、]+/)
+    values = value.split(/[　・\s,、@]+/)
     arr = get(robot, key)
     arr = arr.concat(values)
     arr = uniq(arr)
