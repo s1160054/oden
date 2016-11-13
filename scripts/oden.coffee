@@ -20,7 +20,7 @@
 #    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
 #    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
 #    config - botの設定を表示する
-#    helps - このヘルプを表示する
+#    help - このヘルプを表示する
 #
 # Author:
 #  s1160054
@@ -125,7 +125,7 @@ help = () ->
    "`user-piyo,tama` \n piyo,tamaをレビュワーに選ばないようにする\n１日毎に自動リセットされます",
    "`rejects` \n レビュー不可リストを表示する",
    "`config` \n botの設定を表示する",
-   "`helps` \n このヘルプを表示する"]
+   "`help` \n ヘルプを表示する"]
 
 # リストのユーザーを更新する
 fetch_online_users = (robot) ->

@@ -26,7 +26,7 @@ odenは、Slackの特定チャネルのオンラインのユーザーをラン�
 #    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
 #    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
 #    config - botの設定を表示する
-#    helps - このヘルプを表示する
+#    help - このヘルプを表示する
 #
 # Author:
 #  s1160054
