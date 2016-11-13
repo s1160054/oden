@@ -39,7 +39,7 @@ module.exports = (robot) ->
     msg.send("オンライン: #{online_users.join(', ')}")
 
   # ユーザーをリストから除外する
-  robot.hear /users-(.*)/, (msg) =>
+  robot.hear /user-(.*)/, (msg) =>
     user = msg.match[1]
 
     online_users = (robot.brain.get('online_users') || []).slice(0)
@@ -54,7 +54,7 @@ module.exports = (robot) ->
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
   # ユーザーをリストに追加する
-  robot.hear /users+(.*)/, (msg) =>
+  robot.hear /user\+(.*)/, (msg) =>
     user = msg.match[1]
 
     users = (robot.brain.get('users') || []).slice(0)
@@ -68,7 +68,7 @@ module.exports = (robot) ->
     robot.brain.set('reject_users', reject_users)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
-  robot.hear /reject_users/, (msg) =>
+  robot.hear /rejects/, (msg) =>
     reject_users = (robot.brain.get('reject_users') || []).slice(0)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
