@@ -118,13 +118,13 @@ check_online = (robot, user_id) ->
 rm = (robot, key, value) ->
     arr = (robot.brain.get(key) || []).slice(0)
     reject_idx = arr.indexOf(value)
-    arr.splice(reject_idx, 1)
+    arr = arr.splice(reject_idx, 1)
     robot.brain.set(key, arr)
     return arr
 
 add = (robot, key, value) ->
     arr = (robot.brain.get(key) || []).slice(0)
-    arr.push(arr)
+    arr = arr.push(arr)
     arr = uniq(reject_users)
     robot.brain.set('reject_users', arr)
     return arr
