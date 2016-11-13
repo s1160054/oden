@@ -30,7 +30,7 @@ module.exports = (robot) ->
     my_name = msg.message.user.name
     for name in [super_user, my_name]
       reject_idx = online_users.indexOf(name)
-      online_users.splice(reject_idx, 1)
+      online_users.splice(reject_idx, 1) if reject_idx != -1
     if online_users.length < select_num
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
