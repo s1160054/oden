@@ -9,6 +9,7 @@ channel_name  = process.env.CHANNEL     || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/60  * * * *"
 reset_cron    = process.env.RESET_CRON  || "*/1   * * * *"
 reject_cron   = process.env.REJECT_CRON || "*/120 * * * *"
+super_user    = process.env.SUPER_USER  || 'onodera'
 token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
@@ -24,8 +25,9 @@ module.exports = (robot) ->
   robot.hear /https:\/\/github.com\/.+\/.+\/pull\/\d+/, (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
-    reject_idx = online_users.indexOf(my_name)
-    online_users.splice(reject_idx, 1)
+    for name in [my_name, super_user]
+      reject_idx = online_users.indexOf(name)
+      online_users.splice(reject_idx, 1)
     if online_users.length < select_num
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
