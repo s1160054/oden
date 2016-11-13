@@ -48,6 +48,10 @@ module.exports = (robot) ->
     robot.brain.set('reject_users', uniq(reject_users))
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
+  robot.hear /reject_users/, (msg) =>
+    reject_users = (robot.brain.get('reject_users') || []).slice(0)
+    msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
+
   # reset_cronごとに、ユーザーをリセットする
   new cronJob(reset_cron, () ->
     robot.brain.set('online_users', [])
