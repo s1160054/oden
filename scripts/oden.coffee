@@ -121,16 +121,18 @@ get = (robot, key) ->
     return (robot.brain.get(key) || []).slice(0)
 
 rm = (robot, key, value) ->
+    values = value.split(/[　・\s,]+/)
     arr = get(robot, key)
-    reject_idx = arr.indexOf(value)
-    arr.splice(reject_idx, 1) if reject_idx != -1
+    for value in values
+      reject_idx = arr.indexOf(value)
+      arr.splice(reject_idx, 1) if reject_idx != -1
     robot.brain.set(key, arr)
     return arr
 
 add = (robot, key, value) ->
-    value = value.split(/[　・\s,]+/)
+    values = value.split(/[　・\s,]+/)
     arr = get(robot, key)
-    arr = arr.concat(value)
+    arr = arr.concat(values)
     arr = uniq(arr)
     robot.brain.set(key, arr)
     return arr
