@@ -7,8 +7,8 @@ cronJob = require('cron').CronJob
 select_num    = process.env.SELECT_NUM  || 1
 channel_name  = process.env.CHANNEL     || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
-reset_cron    = process.env.RESET_CRON  || "*/20 * * * * *"
-reject_cron   = process.env.REJECT_CRON || "*/40 * * * * *"
+reset_cron    = process.env.RESET_CRON  || "*/1 * * * *"
+reject_cron   = process.env.REJECT_CRON || "*/10 * * * *"
 token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
@@ -22,7 +22,7 @@ module.exports = (robot) ->
   # レビュー依頼する
   # 引数はPRのURL
   robot.hear /https:\/\/github.com\/.+\/.+\/pull\/\d+/, (msg) =>
-    online_users = (robot.brain.get('online_users') || []).slice(0)
+    online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
     reject_idx = online_users.indexOf(my_name)
     online_users.splice(reject_idx, 1)
@@ -30,7 +30,7 @@ module.exports = (robot) ->
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
     random_fetch(online_users, select_num)
-    msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします #{msg.match} \n from #{my_name}")
+    msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします \n #{msg.match} \n from #{my_name}")
 
   # ユーザーをリストから除外する
   robot.hear /user-(.*)/, (msg) =>
@@ -46,12 +46,12 @@ module.exports = (robot) ->
 
   # ユーザーを表示
   robot.hear /users/, (msg) =>
-    online_users = (robot.brain.get('online_users') || []).slice(0)
+    online_users = get(robot, 'online_users')
     msg.send("オンライン: #{online_users.join(', ')}")
 
   # リジェクトユーザーを表示
   robot.hear /rejects/, (msg) =>
-    reject_users = (robot.brain.get('reject_users') || []).slice(0)
+    reject_users = get(robot, 'reject_users')
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
   # reject_cronごとに、ユーザーをリセットする
@@ -86,7 +86,7 @@ config = () ->
 
 # リストのユーザーを更新する
 fetch_online_users = (robot) ->
-  online_users = robot.brain.get('online_users') || []
+  online_users = get(robot, 'online_users')
   robot.logger.info "List: #{online_users.join(', ')}"
   channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
   request.get channels_list, (error, response, body) =>
@@ -110,23 +110,26 @@ check_online = (robot, user_id) ->
           data = JSON.parse(body)
           return if data.user.is_bot
           user_name = data.user.name
-          online_users = robot.brain.get('online_users') || []
+          online_users = get(robot, 'online_users')
           robot.logger.info "Add:  #{user_name}" if online_users.indexOf(user_name) == -1
           online_users.push(user_name)
           robot.brain.set('online_users', uniq(online_users))
 
+get = (robot, key) ->
+    return (robot.brain.get(key) || []).slice(0)
+
 rm = (robot, key, value) ->
-    arr = (robot.brain.get(key) || []).slice(0)
+    arr = get(robot, key)
     reject_idx = arr.indexOf(value)
-    arr.splice(reject_idx, 1)
+    arr.splice(reject_idx, 1) if reject_idx != -1
     robot.brain.set(key, arr)
     return arr
 
 add = (robot, key, value) ->
-    arr = (robot.brain.get(key) || []).slice(0)
-    arr.push(arr)
+    arr = get(robot, key)
+    arr.push(value)
     arr = uniq(arr)
-    robot.brain.set('reject_users', arr)
+    robot.brain.set(key, arr)
     return arr
 
 uniq = (ar) ->
