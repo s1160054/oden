@@ -6,8 +6,10 @@ cronJob = require('cron').CronJob
 
 select_num   = process.env.SELECT_NUM || 1
 channel_name = process.env.CHANNEL    || "random"
-fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
-reset_cron    = process.env.RESET_CRON  || "*/20 * * * * *"
+fetch_cron    = process.env.FETCH_CRON   || "*/10 * * * * *"
+reset_cron    = process.env.RESET_CRON   || "*/20 * * * * *"
+reject_cron   = process.env.REJECT_CRON  || "*/40 * * * * *"
+
 token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
@@ -38,19 +40,27 @@ module.exports = (robot) ->
 
   # ユーザーをリストから除外する
   robot.hear /reject_user/, (msg) =>
-    online_users = (robot.brain.get('online_users') || []).slice(0)
     user = msg.match
+
+    online_users = (robot.brain.get('online_users') || []).slice(0)
     reject_idx = online_users.indexOf(user)
     online_users.splice(reject_idx, 1)
     robot.brain.set('online_users', online_users)
 
     reject_users = (robot.brain.get('reject_users') || []).slice(0)
+    reject_users.push(user)
     robot.brain.set('reject_users', uniq(reject_users))
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
   robot.hear /reject_users/, (msg) =>
     reject_users = (robot.brain.get('reject_users') || []).slice(0)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
+
+  # reject_cronごとに、ユーザーをリセットする
+  new cronJob(reject_cron, () ->
+    robot.brain.set('reject_users', [])
+    robot.logger.info "reset reject"
+  ).start()
 
   # reset_cronごとに、ユーザーをリセットする
   new cronJob(reset_cron, () ->
