@@ -33,7 +33,7 @@ select_num    = process.env.SELECT_NUM  || 2
 channel_name  = process.env.CHANNEL     || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/1  *    * * *"
 reset_cron    = process.env.RESET_CRON  || "0    */3  * * *"
-reject_cron   = process.env.REJECT_CRON || "0    */24 * * *"
+reject_cron   = process.env.REJECT_CRON || "0    0    * * *"
 super_user    = process.env.SUPER_USER  || 'admin'
 token = process.env.HUBOT_SLACK_TOKEN
 
