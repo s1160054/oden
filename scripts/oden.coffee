@@ -42,15 +42,15 @@ module.exports = (robot) ->
   fetch_online_users(robot)
 
   # 設定を表示する
-  robot.hear /config/, (msg) =>
+  robot.respond /config/, (msg) =>
     msg.send config().join('\n')
 
   # ヘルプを表示する
-  robot.hear /helps/, (msg) =>
+  robot.respond /helps/, (msg) =>
     msg.send help().join('\n')
 
   # レビュワーを選ぶ
-  robot.hear 'pr', (msg) =>
+  robot.respond 'pr', (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
     for name in [super_user, my_name]
@@ -63,26 +63,26 @@ module.exports = (robot) ->
     msg.send("@#{online_users.join(', @')}")
 
   # ユーザーをレビュワーリストから除外する
-  robot.hear /user-(.*)/, (msg) =>
+  robot.respond /user-(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'reject_users', user)
     rm(robot, 'online_users', user)
 
   # ユーザーをレビュワーリストに追加する
-  robot.hear /user\+(.*)/, (msg) =>
+  robot.respond /user\+(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'online_users', user)
     rm(robot, 'reject_users', user)
 
   # レビュワーリストを表示
-  robot.hear /users/, (msg) =>
+  robot.respond /users/, (msg) =>
     online_users = get(robot, 'online_users')
     msg.send("レビュー可能: #{online_users.join(', ')}")
 
   # リジェクトユーザーを表示
-  robot.hear /rejects/, (msg) =>
+  robot.respond /rejects/, (msg) =>
     reject_users = get(robot, 'reject_users')
     msg.send("レビュー不可: #{reject_users.join(', ')}")
 
