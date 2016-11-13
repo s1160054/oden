@@ -1,37 +1,29 @@
 # oden
 
-odenはレビュワーを選んでくれるSlack用のBot
-odenは、Slackの特定チャネルのオンラインのユーザーをランダムに複数人選びます
+レビュワーを選んでくれるSlack用のBot
 
-```md
-# Description
-#  レビュー依頼Bot
-#
-# Dependencies:
-#   "request": "2.78.0"
-#   "cron": "1.1.0"
-#
+# Features
+ - SlackAPIを使います
+ - 特定チャネルのオンラインのユーザーを、ランダムに複数人選びます
+ - レビュー対象者リストと、対象除外者リストをRedisで保持します
+ - それぞれのリストはSlack上のメッセージで追加削除できます
+
 # Configuration:
-#   CHANNEL - チャネル名
-#   SELECT_NUM - レビューに必要な人数
-#   FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定
-#   REJECT_CRON - レビュー依頼不能なユーザーのリストをリセットする間隔をCronで指定
-#   RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定
-#   SUPER_USER
-#
+ - CHANNEL - チャネル名
+ - SELECT_NUM - レビューに必要な人数 : 2
+ - FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定 :  "*/1  *    * * *"
+ - REJECT_CRON - レビュー依頼不能なユーザーのリストをリセットする間隔をCronで指定 "0    */24 * * *"
+ - RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定 : "0    */3  * * *"
+ - SUPER_USER
+
 # Commands:
-#    pr - レビュワーを選ぶ
-#    users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
-#    user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
-#    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
-#    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
-#    config - botの設定を表示する
-#    help - このヘルプを表示する
-#
-# Author:
-#  s1160054
-#
-```
+ - pr - レビュワーを選ぶ
+ - users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
+ - user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
+ - user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
+ - rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
+ - config - botの設定を表示する
+ - help - このヘルプを表示する
 
 ### Running oden Locally
 
