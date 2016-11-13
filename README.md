@@ -1,14 +1,16 @@
-# oden
+# Oden
 
 レビュワーを選んでくれるSlack用のBot
 
 # Features
- - SlackAPIを使います
+
+ - Slack APIを使います
  - 特定チャネルのオンラインのユーザーを、ランダムに複数人選びます
  - レビュー対象者リストと、対象除外者リストをRedisで保持します
  - それぞれのリストはSlack上のメッセージで追加削除できます
 
-# Configuration:
+# Configuration
+
  - CHANNEL - チャネル名
  - SELECT_NUM - レビューに必要な人数 : 2
  - FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定 :  "*/1  *    * * *"
@@ -16,7 +18,8 @@
  - RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定 : "0    */3  * * *"
  - SUPER_USER
 
-# Commands:
+# Commands
+
  - pr - レビュワーを選ぶ
  - users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
  - user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
