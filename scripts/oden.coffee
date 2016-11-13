@@ -39,8 +39,8 @@ module.exports = (robot) ->
     msg.send("オンライン: #{online_users.join(', ')}")
 
   # ユーザーをリストから除外する
-  robot.hear /reject_user/, (msg) =>
-    user = msg.match
+  robot.hear /reject_user (.*)/, (msg) =>
+    user = msg.match[1]
 
     online_users = (robot.brain.get('online_users') || []).slice(0)
     reject_idx = online_users.indexOf(user)
