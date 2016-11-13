@@ -4,11 +4,11 @@
 request = require('request')
 cronJob = require('cron').CronJob
 
-select_num    = process.env.SELECT_NUM  || 1
+select_num    = process.env.SELECT_NUM  || 2
 channel_name  = process.env.CHANNEL     || "random"
-fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
-reset_cron    = process.env.RESET_CRON  || "*/1 * * * *"
-reject_cron   = process.env.REJECT_CRON || "*/10 * * * *"
+fetch_cron    = process.env.FETCH_CRON  || "*/60  * * * *"
+reset_cron    = process.env.RESET_CRON  || "*/1   * * * *"
+reject_cron   = process.env.REJECT_CRON || "*/120 * * * *"
 token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
@@ -29,7 +29,7 @@ module.exports = (robot) ->
     if online_users.length < select_num
       msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
       return
-    random_fetch(online_users, select_num)
+    online_users = random_fetch(online_users, select_num)
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします \n #{msg.match} \n from #{my_name}")
 
   # ユーザーをリストから除外する
@@ -131,7 +131,7 @@ rm = (robot, key, value) ->
     return arr
 
 add = (robot, key, value) ->
-    values = value.split(/[　・\s,]+/)
+    values = value.split(/[　・\s,、]+/)
     arr = get(robot, key)
     arr = arr.concat(values)
     arr = uniq(arr)
