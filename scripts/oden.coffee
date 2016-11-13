@@ -53,6 +53,21 @@ module.exports = (robot) ->
     robot.brain.set('reject_users', reject_users)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
+  # ユーザーをリストに追加する
+  robot.hear /users+(.*)/, (msg) =>
+    user = msg.match[1]
+
+    users = (robot.brain.get('users') || []).slice(0)
+    users.push(user)
+    users = uniq(users)
+    robot.brain.set('online_users', users)
+
+    reject_users = (robot.brain.get('reject_users') || []).slice(0)
+    reject_idx = reject_users.indexOf(user)
+    reject_users.splice(reject_idx, 1)
+    robot.brain.set('reject_users', reject_users)
+    msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
+
   robot.hear /reject_users/, (msg) =>
     reject_users = (robot.brain.get('reject_users') || []).slice(0)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
