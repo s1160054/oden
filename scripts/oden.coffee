@@ -22,7 +22,7 @@ module.exports = (robot) ->
 
   # レビュー依頼する
   # 引数はPRのURL
-  robot.hear /^https:\/\/github.com\/.+\/.+\/pull\/\d+$/, (msg) =>
+  robot.hear /^https:\/\/github.com\/.+\/.+\/pull\/\d+$/i, (msg) =>
     online_users = (robot.brain.get('online_users') || []).slice(0)
     my_name = msg.message.user.name
     reject_idx = online_users.indexOf(my_name)
@@ -34,12 +34,12 @@ module.exports = (robot) ->
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします #{msg.match} \n from #{my_name}")
 
   # ユーザーを表示
-  robot.hear /^users$/, (msg) =>
+  robot.hear /^users$/i, (msg) =>
     online_users = robot.brain.get('online_users') || []
     msg.send("オンライン: #{online_users.join(', ')}")
 
   # ユーザーをリストから除外する
-  robot.hear /^reject_user=(.*)$/, (msg) =>
+  robot.hear /^reject_user=(.*)$/i, (msg) =>
     user = msg.match[1]
 
     online_users = (robot.brain.get('online_users') || []).slice(0)
@@ -53,7 +53,7 @@ module.exports = (robot) ->
     robot.brain.set('reject_users', reject_users)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
-  robot.hear /^reject_users$/, (msg) =>
+  robot.hear /^reject_users$/i, (msg) =>
     reject_users = (robot.brain.get('reject_users') || []).slice(0)
     msg.send("リジェクトユーザー: #{reject_users.join(', ')}")
 
