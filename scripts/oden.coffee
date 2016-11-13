@@ -46,7 +46,7 @@ module.exports = (robot) ->
     msg.send config().join('\n')
 
   # ヘルプを表示する
-  robot.respond /helps/, (msg) =>
+  robot.respond /help/, (msg) =>
     msg.send help().join('\n')
 
   # レビュワーを選ぶ
