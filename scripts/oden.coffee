@@ -50,7 +50,7 @@ module.exports = (robot) ->
     msg.send help().join('\n')
 
   # レビュワーを選ぶ
-  robot.respond 'pr', (msg) =>
+  robot.respond /pr/, (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
     for name in [super_user, my_name]
