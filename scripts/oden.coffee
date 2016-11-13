@@ -35,12 +35,14 @@ module.exports = (robot) ->
   # ユーザーをリストから除外する
   robot.hear /user-(.*)/, (msg) =>
     user = msg.match[1]
+    user = msg.message.user.name if /me/.test(user)
     add(robot, 'reject_users', user)
     rm(robot, 'online_users', user)
 
   # ユーザーをリストに追加する
   robot.hear /user\+(.*)/, (msg) =>
     user = msg.match[1]
+    user = msg.message.user.name if /me/.test(user)
     add(robot, 'online_users', user)
     rm(robot, 'reject_users', user)
 
@@ -126,8 +128,9 @@ rm = (robot, key, value) ->
     return arr
 
 add = (robot, key, value) ->
+    value = value.split(/[　・\s,]+/)
     arr = get(robot, key)
-    arr.push(value)
+    arr = arr.concat(value)
     arr = uniq(arr)
     robot.brain.set(key, arr)
     return arr
