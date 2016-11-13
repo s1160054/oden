@@ -6,9 +6,9 @@ cronJob = require('cron').CronJob
 
 select_num    = process.env.SELECT_NUM  || 2
 channel_name  = process.env.CHANNEL     || "random"
-fetch_cron    = process.env.FETCH_CRON  || "*/60  * * * *"
-reset_cron    = process.env.RESET_CRON  || "*/1   * * * *"
-reject_cron   = process.env.REJECT_CRON || "*/120 * * * *"
+fetch_cron    = process.env.FETCH_CRON  || "*/1  *    * * *"
+reset_cron    = process.env.RESET_CRON  || "0    */3  * * *"
+reject_cron   = process.env.REJECT_CRON || "0    */24 * * *"
 super_user    = process.env.SUPER_USER  || 'onodera'
 token = process.env.HUBOT_SLACK_TOKEN
 
@@ -21,7 +21,6 @@ module.exports = (robot) ->
     msg.send config().join('\n')
 
   # レビュー依頼する
-  # 引数はPRのURL
   robot.hear /https:\/\/github.com\/.+\/.+\/pull\/\d+/, (msg) =>
     online_users = get(robot, 'online_users')
     my_name = msg.message.user.name
@@ -34,21 +33,21 @@ module.exports = (robot) ->
     online_users = random_fetch(online_users, select_num)
     msg.send("@#{online_users.join(', @')} \n こちらのレビューお願いします \n #{msg.match} \n from #{my_name}")
 
-  # ユーザーをリストから除外する
+  # ユーザーをレビュワーリストから除外する
   robot.hear /user-(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'reject_users', user)
     rm(robot, 'online_users', user)
 
-  # ユーザーをリストに追加する
+  # ユーザーをレビュワーリストに追加する
   robot.hear /user\+(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'online_users', user)
     rm(robot, 'reject_users', user)
 
-  # ユーザーを表示
+  # レビュワーリストを表示
   robot.hear /users/, (msg) =>
     online_users = get(robot, 'online_users')
     msg.send("オンライン: #{online_users.join(', ')}")
