@@ -83,8 +83,9 @@ module.exports = (robot) ->
 config = () ->
   ["レビュワ: #{select_num}人",
    "チャネル: #{channel_name}",
-   "フェッチ間隔: #{fetch_cron}",
-   "リセット間隔: #{reset_cron}"]
+   "オンラインユーザー Add:   #{fetch_cron}",
+   "オンラインユーザー Reset: #{reset_cron}",
+   "除外ユーザー       Reset: #{reset_cron}",]
 
 # リストのユーザーを更新する
 fetch_online_users = (robot) ->
