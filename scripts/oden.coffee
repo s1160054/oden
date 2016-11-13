@@ -1,5 +1,30 @@
-# Description:
-#   レビュー依頼用Bot oden
+# Description
+#  レビュー依頼Bot
+#
+# Dependencies:
+#   "request": "2.78.0"
+#   "cron": "1.1.0"
+#
+# Configuration:
+#   CHANNEL - チャネル名
+#   SELECT_NUM - レビューに必要な人数
+#   FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定
+#   REJECT_CRON - レビュー依頼不能なユーザーのリストをリセットする間隔をCronで指定
+#   RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定
+#   SUPER_USER
+#
+# Commands:
+#    pr - レビュワーを選ぶ
+#    users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
+#    user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
+#    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
+#    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
+#    config - botの設定を表示する
+#    helps - このヘルプを表示する
+#
+# Author:
+#  s1160054
+#
 
 request = require('request')
 cronJob = require('cron').CronJob
@@ -9,7 +34,7 @@ channel_name  = process.env.CHANNEL     || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/1  *    * * *"
 reset_cron    = process.env.RESET_CRON  || "0    */3  * * *"
 reject_cron   = process.env.REJECT_CRON || "0    */24 * * *"
-super_user    = process.env.SUPER_USER  || 'onodera'
+super_user    = process.env.SUPER_USER  || 'admin'
 token = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
