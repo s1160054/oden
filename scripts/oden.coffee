@@ -9,6 +9,7 @@ channel_name = process.env.CHANNEL    || "random"
 fetch_cron    = process.env.FETCH_CRON  || "*/10 * * * * *"
 reset_cron    = process.env.RESET_CRON  || "*/20 * * * * *"
 token = process.env.HUBOT_SLACK_TOKEN
+keep_alive_sec = 0
 
 module.exports = (robot) ->
   robot.logger.info config()
@@ -46,6 +47,15 @@ module.exports = (robot) ->
   new cronJob(fetch_cron, () ->
     fetch_online_users(robot)
   ).start()
+
+  # １秒おき
+  new cronJob("* * * * * *", () ->
+    robot.logger.info "keep alive #{keep_alive_sec++}"
+  ).start()
+
+  # 生存確認
+  robot.router.get '/', (req, res) ->
+    res.send 'pong'
 
 ##################################################
 
