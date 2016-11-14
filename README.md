@@ -9,27 +9,28 @@
  - レビュー対象者リストと、対象除外者リストをRedisで保持します
  - それぞれのリストはSlack上のメッセージで追加削除できます
 
+## Commands
+
+| Cmd | Description| Detail |
+|---|---| --- |
+| pr | レビュワーを選ぶ | |
+| users | レビュー依頼が可能なユーザーを表示 | 最近オンライン＆rejectsに含まれていないユーザー |
+| user+(.*) | レビュー依頼可能なユーザーに追加する | FETCH_CRONごとにリセット<br>カンマや空白区切りで複数可 |
+| user-(.*) | レビュワーに選ばないようにする | REJECT_CRONごとにリセット<br>カンマや空白区切りで複数可 |
+| rejects | レビュー不可リストを表示する | REJECT_CRONごとにリセット |
+| config | botの設定を表示する | |
+| helps | ヘルプを表示する | |
+
 ## Configuration
+
 |Config Variable| Default value | Description|
 |---|---|---|
-| CHANNEL | "random" | レビュワーのいるチャネル名 | 
+| CHANNEL | "random" | レビュワーのいるチャネル名 |
 | SELECT_NUM | 2 | レビューに必要な人数 |
 | FETCH_CRON | "*/1  *    * * *" => １分毎 |  レビュー依頼可能なユーザーを更新する間隔をCronで指定 |
 | REJECT_CRON | "0    0 * * *" => 毎日０時 | レビュー依頼不能なユーザーをリセットする間隔をCronで指定 |
 | RESET_CRON |  "0    */3  * * *" => ３時間毎 | レビュー依頼可能なユーザーをリセットする間隔をCronで指定 |
 | SUPER_USER | | |
-
-## Commands
-
-| Cmd | Description|
-|---|---|
-| pr | レビュワーを選ぶ |
-| users | レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー) |
-| user+(.*) | レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット) |
-| user-(.*) | レビュワーに選ばないようにする(REJECT_CRONごとにリセット) |
-| rejects | レビュー不可リストを表示する(REJECT_CRONごとにリセット) |
-| config | botの設定を表示する |
-| help | ヘルプを表示する |
 
 ## Running oden Locally
 
