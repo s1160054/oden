@@ -20,7 +20,7 @@
 #    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
 #    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
 #    config - botの設定を表示する
-#    help - このヘルプを表示する
+#    helps - ヘルプを表示する
 #
 # Author:
 #  s1160054
@@ -29,13 +29,14 @@
 request = require('request')
 cronJob = require('cron').CronJob
 
-select_num    = process.env.SELECT_NUM  || 2
-channel_name  = process.env.CHANNEL     || "random"
-fetch_cron    = process.env.FETCH_CRON  || "*/1  *    * * *"
-reset_cron    = process.env.RESET_CRON  || "0    */3  * * *"
-reject_cron   = process.env.REJECT_CRON || "0    */24 * * *"
-super_user    = process.env.SUPER_USER  || 'admin'
-token = process.env.HUBOT_SLACK_TOKEN
+select_num      = process.env.SELECT_NUM  || 2
+channel_name    = process.env.CHANNEL     || "random"
+private_channel = process.env.PRIVATE_CHANNEL || true
+fetch_cron      = process.env.FETCH_CRON  || "*/1  *    * * *"
+reset_cron      = process.env.RESET_CRON  || "0    */3  * * *"
+reject_cron     = process.env.REJECT_CRON || "0    0    * * *"
+super_user      = process.env.SUPER_USER  || 'admin'
+token           = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
   robot.logger.info config()
@@ -43,11 +44,11 @@ module.exports = (robot) ->
 
   # 設定を表示する
   robot.respond /config/, (msg) =>
-    msg.send config().join('\n')
+    msg.send "\n#{config().join('\n')}"
 
   # ヘルプを表示する
-  robot.respond /help/, (msg) =>
-    msg.send help().join('\n')
+  robot.respond /helps/, (msg) =>
+    msg.send "\n#{help().join('\n')}"
 
   # レビュワーを選ぶ
   robot.respond /pr/, (msg) =>
@@ -125,19 +126,25 @@ help = () ->
    "`user-piyo,tama` \n piyo,tamaをレビュワーに選ばないようにする\n１日毎に自動リセットされます",
    "`rejects` \n レビュー不可リストを表示する",
    "`config` \n botの設定を表示する",
-   "`help` \n ヘルプを表示する"]
+   "`helps` \n ヘルプを表示する"]
 
 # リストのユーザーを更新する
 fetch_online_users = (robot) ->
   online_users = get(robot, 'online_users')
   robot.logger.info "List: #{online_users.join(', ')}"
   channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
+  channels_list = "https://slack.com/api/groups.list?token=#{token}&pretty=1" if private_channel
   request.get channels_list, (error, response, body) =>
     data = JSON.parse(body)
-    channel = null
-    for channel in data.channels
-      channel = channel if channel.name == channel_name
-    user_ids = channel.members.sort -> Math.random()
+    console.log data
+    target_channel = null
+    if private_channel
+      for channel in data.groups
+        target_channel = channel if channel.name == channel_name
+    else
+      for channel in data.channels
+        target_channel = channel if channel.name == channel_name
+    user_ids = target_channel.members.sort -> Math.random()
     for user_id in user_ids
       check_online(robot, user_id)
 
@@ -168,6 +175,7 @@ rm = (robot, key, value) ->
       reject_idx = arr.indexOf(value)
       arr.splice(reject_idx, 1) if reject_idx != -1
     robot.brain.set(key, arr)
+    console.log "#{key} #{robot.brain.get(key, arr)}"
     return arr
 
 add = (robot, key, value) ->
@@ -175,7 +183,9 @@ add = (robot, key, value) ->
     arr = get(robot, key)
     arr = arr.concat(values)
     arr = uniq(arr)
+    arr.splice arr.indexOf(''), 1 if arr.indexOf('') != -1
     robot.brain.set(key, arr)
+    console.log "#{key} #{robot.brain.get(key, arr)}"
     return arr
 
 uniq = (ar) ->
