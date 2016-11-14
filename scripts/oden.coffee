@@ -69,8 +69,9 @@ module.exports = (robot) ->
   robot.respond /pr/, (msg) =>
     users = get(robot, 'users')
     never_users = get(robot, 'never_users')
+    skip_users = get(robot, 'skip_users')
     my_name = msg.message.user.name
-    for name in [super_user, my_name] + never_users
+    for name in [super_user, my_name] + never_users + skip_users
       skip_idx = users.indexOf(name)
       users.splice(skip_idx, 1) if skip_idx != -1
     if users.length < select_num
@@ -190,6 +191,9 @@ check_online = (robot, user_id) ->
           data = JSON.parse(body)
           return if data.user.is_bot
           user_name = data.user.name
+          never_users = get(robot, 'never_users')
+          skip_users = get(robot, 'skip_users')
+          return if (never_users + skip_users).indexOf(user_name) != -1
           users = get(robot, 'users')
           robot.logger.info "Add:  #{user_name}" if users.indexOf(user_name) == -1
           users.push(user_name)
