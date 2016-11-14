@@ -11,6 +11,7 @@
 #   FETCH_CRON - ユーザーのオンラインをチェックする間隔
 #   SKIP_CRON  - スキップされたユーザーを復活させる間隔
 #   CLEAR_CRON - オフラインユーザーをユーザーから外す間隔
+#   JSON_PATH  - 永続化用JSONファイルのパス
 #   SUPER_USER
 #
 # Commands:
@@ -30,6 +31,7 @@
 
 request = require('request')
 cronJob = require('cron').CronJob
+fs      = require ('fs')
 
 select_num   = process.env.SELECT_NUM  || 2
 channel_name = process.env.CHANNEL     || 'random'
@@ -37,9 +39,25 @@ super_user   = process.env.SUPER_USER  || 'admin'
 fetch_cron   = process.env.FETCH_CRON  || '*/10 *   * * *'
 clear_cron   = process.env.CLEAR_CRON  || '0    */1 * * *'
 skip_cron    = process.env.SKIP_CRON   || '0    0   * * *'
+path         = process.env.JSON_PATH   || './db.json'
 token        = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
+  robot.brain.setAutoSave false
+
+  load = ->
+    robot.logger.info "load"
+    data = JSON.parse fs.readFileSync path, encoding: 'utf-8'
+    robot.brain.mergeData data
+    robot.brain.setAutoSave true
+
+  save = (data) ->
+    robot.logger.info "save"
+    fs.writeFileSync path, JSON.stringify data
+
+  robot.brain.on 'loaded', save
+  load()
+
   robot.logger.info config()
   fetch_users(robot)
 
