@@ -148,11 +148,11 @@ module.exports = (robot) ->
 
 # 設定を配列で返す
 config = () ->
-  ["レビュワ: `#{select_num}人`",
-   "チャネル: `#{channel_name}`",
-   "レビュワー Fetch: `#{fetch_cron}`",
-   "レビュワー Clear: `#{clear_cron}`",
-   "リジェクト Clear: `#{skip_cron}`",]
+  ["レビュワー: `#{select_num}人`",
+   "チャンネル: `#{channel_name}`",
+   "オンラインユーザー追加: `#{fetch_cron}`",
+   "オフラインユーザー削除: `#{clear_cron}`",
+   "レビュースキップの取消: `#{skip_cron}`",]
 
 # ユーザーを更新する
 fetch_users = (robot) ->
