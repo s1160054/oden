@@ -136,7 +136,6 @@ fetch_online_users = (robot) ->
   channels_list = "https://slack.com/api/groups.list?token=#{token}&pretty=1" if private_channel
   request.get channels_list, (error, response, body) =>
     data = JSON.parse(body)
-    console.log data
     target_channel = null
     if private_channel
       for channel in data.groups
