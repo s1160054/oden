@@ -8,19 +8,21 @@
 # Configuration:
 #   CHANNEL - チャネル名
 #   SELECT_NUM - レビューに必要な人数
-#   FETCH_CRON - レビュー依頼可能なユーザーを更新する間隔をCronで指定
-#   REJECT_CRON - レビュー依頼不能なユーザーのリストをリセットする間隔をCronで指定
-#   RESET_CRON - レビュー依頼可能なユーザーをリセットする間隔をCronで指定
+#   FETCH_CRON - ユーザーのオンラインをチェックする間隔
+#   SKIP_CRON  - スキップされたユーザーを復活させる間隔
+#   CLEAR_CRON - オフラインユーザーをユーザーから外す間隔
 #   SUPER_USER
 #
 # Commands:
 #    pr - レビュワーを選ぶ
-#    users - レビュー依頼が可能なユーザーを表示(最近オンライン＆rejectsに含まれていないユーザー)
-#    user+(.*) - レビュー依頼可能なユーザーに追加する(FETCH_CRONごとにリセット)
-#    user-(.*) - レビュワーに選ばないようにする(REJECT_CRONごとにリセット)
-#    rejects - レビュー不可リストを表示する(REJECT_CRONごとにリセット)
+#    users      - ユーザーを表示
+#    user+(.*)  - ユーザーを追加する
+#    user-(.*)  - ユーザーをスキップする
+#    skips      - スキップされたユーザーを表示
+#    nevers     - 削除されたユーザーを表示
+#    never+(.*) - ユーザーを削除
+#    never-(.*) - ユーザーの削除を取り消す
 #    config - botの設定を表示する
-#    helps - ヘルプを表示する
 #
 # Author:
 #  s1160054
@@ -29,79 +31,95 @@
 request = require('request')
 cronJob = require('cron').CronJob
 
-select_num      = process.env.SELECT_NUM  || 2
-channel_name    = process.env.CHANNEL     || "random"
-private_channel = process.env.PRIVATE_CHANNEL || true
-fetch_cron      = process.env.FETCH_CRON  || "*/1  *    * * *"
-reset_cron      = process.env.RESET_CRON  || "0    */3  * * *"
-reject_cron     = process.env.REJECT_CRON || "0    0    * * *"
-super_user      = process.env.SUPER_USER  || 'admin'
-token           = process.env.HUBOT_SLACK_TOKEN
+select_num   = process.env.SELECT_NUM  || 2
+channel_name = process.env.CHANNEL     || 'random'
+super_user   = process.env.SUPER_USER  || 'admin'
+fetch_cron   = process.env.FETCH_CRON  || '*/10 *   * * *'
+clear_cron   = process.env.CLEAR_CRON  || '0    */1 * * *'
+skip_cron    = process.env.SKIP_CRON   || '0    0   * * *'
+token        = process.env.HUBOT_SLACK_TOKEN
 
 module.exports = (robot) ->
   robot.logger.info config()
-  fetch_online_users(robot)
+  fetch_users(robot)
 
   # 設定を表示する
   robot.respond /config/, (msg) =>
     msg.send "\n#{config().join('\n')}"
 
-  # ヘルプを表示する
-  robot.respond /helps/, (msg) =>
-    msg.send "\n#{help().join('\n')}"
-
   # レビュワーを選ぶ
   robot.respond /pr/, (msg) =>
-    online_users = get(robot, 'online_users')
+    users = get(robot, 'users')
+    never_users = get(robot, 'never_users')
     my_name = msg.message.user.name
-    for name in [super_user, my_name]
-      reject_idx = online_users.indexOf(name)
-      online_users.splice(reject_idx, 1) if reject_idx != -1
-    if online_users.length < select_num
-      msg.send("アサインできるレビュワーが #{online_users.length} 名です\n")
+    for name in [super_user, my_name] + never_users
+      skip_idx = users.indexOf(name)
+      users.splice(skip_idx, 1) if skip_idx != -1
+    if users.length < select_num
+      msg.send("アサインできるレビュワーが #{users.length} 名です\n")
       return
-    online_users = random_fetch(online_users, select_num)
-    msg.send("@#{online_users.join(', @')}")
+    users = random_fetch(users, select_num)
+    msg.send("@#{users.join(' @')}")
 
-  # ユーザーをレビュワーリストから除外する
+  # ユーザーをスキップ
   robot.respond /user-(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
-    add(robot, 'reject_users', user)
-    rm(robot, 'online_users', user)
+    add(robot, 'skip_users', user)
+    rm(robot, 'users', user)
 
-  # ユーザーをレビュワーリストに追加する
+  # ユーザーを追加
   robot.respond /user\+(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
-    add(robot, 'online_users', user)
-    rm(robot, 'reject_users', user)
+    add(robot, 'users', user)
+    rm(robot, 'skip_users', user)
 
-  # レビュワーリストを表示
+  # ユーザーを表示
   robot.respond /users/, (msg) =>
-    online_users = get(robot, 'online_users')
-    msg.send("レビュー可能: #{online_users.join(', ')}")
+    users = get(robot, 'users')
+    msg.send("レビュー可能なユーザー: \n#{users.join(', ')}")
 
-  # リジェクトユーザーを表示
-  robot.respond /rejects/, (msg) =>
-    reject_users = get(robot, 'reject_users')
-    msg.send("レビュー不可: #{reject_users.join(', ')}")
+  # スキップリストを表示
+  robot.respond /skips/, (msg) =>
+    skip_users = get(robot, 'skip_users')
+    msg.send("スキップしたユーザー: \n#{skip_users.join(', ')}")
 
-  # reject_cronごとに、ユーザーをリセットする
-  new cronJob(reject_cron, () ->
-    robot.brain.set('reject_users', [])
-    robot.logger.info "reset reject"
+  # ユーザーを復活
+  robot.respond /never-(.*)/, (msg) =>
+    user = msg.match[1]
+    user = msg.message.user.name if /me/.test(user)
+    add(robot, 'users', user)
+    rm(robot, 'never_users', user)
+
+  # ユーザーを削除
+  robot.respond /never\+(.*)/, (msg) =>
+    user = msg.match[1]
+    user = msg.message.user.name if /me/.test(user)
+    add(robot, 'never_users', user)
+    rm(robot, 'users', user)
+
+  # 削除されたユーザーを表示
+  robot.respond /nevers/, (msg) =>
+    never_users = get(robot, 'never_users')
+    msg.send("削除されたユーザー: \n#{never_users.join(', ')}")
+
+  # スキップリストをリセット
+  new cronJob(skip_cron, () ->
+    robot.brain.set('skip_users', [])
+    robot.logger.info "skip"
   ).start()
 
-  # reset_cronごとに、ユーザーをリセットする
-  new cronJob(reset_cron, () ->
-    robot.brain.set('online_users', [])
-    robot.logger.info "reset"
+  # ユーザーリストをリセット
+  new cronJob(clear_cron, () ->
+    robot.brain.set('users', [])
+    robot.logger.info "clear"
   ).start()
 
-  # fetch_cronごとに、ユーザーを追加する
+  # ユーザーリストを更新
   new cronJob(fetch_cron, () ->
-    fetch_online_users(robot)
+    fetch_users(robot)
+    robot.logger.info "fetch"
   ).start()
 
   # 生存確認
@@ -115,39 +133,34 @@ config = () ->
   ["レビュワ: `#{select_num}人`",
    "チャネル: `#{channel_name}`",
    "レビュワー Fetch: `#{fetch_cron}`",
-   "レビュワー Reset: `#{reset_cron}`",
-   "リジェクト Reset: `#{reset_cron}`",]
+   "レビュワー Clear: `#{clear_cron}`",
+   "リジェクト Clear: `#{skip_cron}`",]
 
-# ヘルプを配列で返す
-help = () ->
-  ["`pr` \n レビュワーを選ぶ",
-   "`users` \n レビュー依頼が可能なユーザーを表示\n最近オンライン＆rejectsに含まれていないユーザーです",
-   "`user+hoge,piyo,tama` \n hoge,piyo,tamaをレビュー依頼可能なユーザーに追加する",
-   "`user-piyo,tama` \n piyo,tamaをレビュワーに選ばないようにする\n１日毎に自動リセットされます",
-   "`rejects` \n レビュー不可リストを表示する",
-   "`config` \n botの設定を表示する",
-   "`helps` \n ヘルプを表示する"]
-
-# リストのユーザーを更新する
-fetch_online_users = (robot) ->
-  online_users = get(robot, 'online_users')
-  robot.logger.info "List: #{online_users.join(', ')}"
-  channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
-  channels_list = "https://slack.com/api/groups.list?token=#{token}&pretty=1" if private_channel
-  request.get channels_list, (error, response, body) =>
+# ユーザーを更新する
+fetch_users = (robot) ->
+  users = get(robot, 'users')
+  robot.logger.info "List: #{users.join(', ')}"
+  groups_list = "https://slack.com/api/groups.list?token=#{token}&pretty=1"
+  request.get groups_list, (error, response, body) =>
     data = JSON.parse(body)
     target_channel = null
-    if private_channel
-      for channel in data.groups
-        target_channel = channel if channel.name == channel_name
+    for group in data.groups
+      target_channel = group if group.name == channel_name
+    if target_channel
+      user_ids = target_channel.members.sort -> Math.random()
+      for user_id in user_ids
+        check_online(robot, user_id)
     else
-      for channel in data.channels
-        target_channel = channel if channel.name == channel_name
-    user_ids = target_channel.members.sort -> Math.random()
-    for user_id in user_ids
-      check_online(robot, user_id)
+      channels_list = "https://slack.com/api/channels.list?token=#{token}&pretty=1"
+      request.get channels_list, (error, response, body) =>
+        data = JSON.parse(body)
+        for channel in data.channels
+          target_channel = channel if channel.name == channel_name
+        user_ids = target_channel.members.sort -> Math.random()
+        for user_id in user_ids
+            check_online(robot, user_id)
 
-# リストに追加する
+# ユーザーを追加する
 check_online = (robot, user_id) ->
   do (user_id) ->
     users_getPresence = "https://slack.com/api/users.getPresence?token=#{token}&user=#{user_id}&pretty=1"
@@ -159,10 +172,10 @@ check_online = (robot, user_id) ->
           data = JSON.parse(body)
           return if data.user.is_bot
           user_name = data.user.name
-          online_users = get(robot, 'online_users')
-          robot.logger.info "Add:  #{user_name}" if online_users.indexOf(user_name) == -1
-          online_users.push(user_name)
-          robot.brain.set('online_users', uniq(online_users))
+          users = get(robot, 'users')
+          robot.logger.info "Add:  #{user_name}" if users.indexOf(user_name) == -1
+          users.push(user_name)
+          robot.brain.set('users', uniq(users))
 
 get = (robot, key) ->
     return (robot.brain.get(key) || []).slice(0)
@@ -171,8 +184,8 @@ rm = (robot, key, value) ->
     values = value.split(/[　・\s,、@]+/)
     arr = get(robot, key)
     for value in values
-      reject_idx = arr.indexOf(value)
-      arr.splice(reject_idx, 1) if reject_idx != -1
+      skip_idx = arr.indexOf(value)
+      arr.splice(skip_idx, 1) if skip_idx != -1
     robot.brain.set(key, arr)
     console.log "#{key} #{robot.brain.get(key, arr)}"
     return arr
