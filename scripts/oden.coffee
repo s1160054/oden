@@ -19,10 +19,8 @@
 #    users      - ユーザーを表示
 #    user+(.*)  - ユーザーを追加する
 #    user-(.*)  - ユーザーをスキップする
-#    skips      - スキップされたユーザーを表示
-#    nevers     - 削除されたユーザーを表示
-#    never+(.*) - ユーザーを削除
-#    never-(.*) - ユーザーの削除を取り消す
+#    user!-(.*) - ユーザーを削除
+#    user!+(.*) - ユーザーの削除を取り消す
 #    config - botの設定を表示する
 #
 # Author:
@@ -39,6 +37,7 @@ super_user   = process.env.SUPER_USER  || 'admin'
 fetch_cron   = process.env.FETCH_CRON  || '*/10 *   * * *'
 clear_cron   = process.env.CLEAR_CRON  || '0    */1 * * *'
 skip_cron    = process.env.SKIP_CRON   || '0    0   * * *'
+alert_cron   = process.env.ALERT_CRON  || '0   17   * * *'
 path         = process.env.JSON_PATH   || './db.json'
 token        = process.env.HUBOT_SLACK_TOKEN
 
@@ -71,14 +70,19 @@ module.exports = (robot) ->
     never_users = get(robot, 'never_users')
     skip_users = get(robot, 'skip_users')
     my_name = msg.message.user.name
-    for name in [super_user, my_name] + never_users + skip_users
+    for name in ([super_user, my_name].concat(never_users).concat(skip_users))
       skip_idx = users.indexOf(name)
       users.splice(skip_idx, 1) if skip_idx != -1
     if users.length < select_num
       msg.send("アサインできるレビュワーが #{users.length} 名です\n")
+      fetch_users(robot)
       return
-    users = random_fetch(users, select_num)
-    msg.send("@#{users.join(' @')}")
+    selected_users = random_fetch(users, select_num)
+    for name in selected_users
+      rm(robot, 'users', name)
+    message = ["こちらの#{select_num}名にレビューをお願いします。\n @#{selected_users.join(' @')}",
+               users_msg(robot).join('\n\n')+"```"]
+    msg.send(message.join('\n'))
 
   # ユーザーをスキップ
   robot.respond /user-(.*)/, (msg) =>
@@ -96,32 +100,21 @@ module.exports = (robot) ->
 
   # ユーザーを表示
   robot.respond /users/, (msg) =>
-    users = get(robot, 'users')
-    msg.send("レビュー可能なユーザー: \n#{users.join(', ')}")
-
-  # スキップリストを表示
-  robot.respond /skips/, (msg) =>
-    skip_users = get(robot, 'skip_users')
-    msg.send("スキップしたユーザー: \n#{skip_users.join(', ')}")
+    msg.send(users_msg(robot).join('\n\n'))
 
   # ユーザーを復活
-  robot.respond /never-(.*)/, (msg) =>
+  robot.respond /user!\+(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'users', user)
     rm(robot, 'never_users', user)
 
   # ユーザーを削除
-  robot.respond /never\+(.*)/, (msg) =>
+  robot.respond /user!\-(.*)/, (msg) =>
     user = msg.match[1]
     user = msg.message.user.name if /me/.test(user)
     add(robot, 'never_users', user)
     rm(robot, 'users', user)
-
-  # 削除されたユーザーを表示
-  robot.respond /nevers/, (msg) =>
-    never_users = get(robot, 'never_users')
-    msg.send("削除されたユーザー: \n#{never_users.join(', ')}")
 
   # スキップリストをリセット
   new cronJob(skip_cron, () ->
@@ -141,6 +134,12 @@ module.exports = (robot) ->
     robot.logger.info "fetch"
   ).start()
 
+  new cronJob(alert_cron, () ->
+    robot.logger.info "定期"
+    envelope = room: channel_name
+    robot.send envelope, users_msg(robot).join('\n\n')
+  ).start()
+
   # 生存確認
   robot.router.get '/', (req, res) ->
     res.send 'pong'
@@ -154,6 +153,16 @@ config = () ->
    "オンラインユーザー追加: `#{fetch_cron}`",
    "オフラインユーザー削除: `#{clear_cron}`",
    "レビュースキップの取消: `#{skip_cron}`",]
+
+# ユーザーのステータス表示する
+users_msg = (robot) ->
+  users_list = get(robot, 'users')
+  skip_users = get(robot, 'skip_users')
+  never_users = get(robot, 'never_users')
+  ["```１０分間レビュー依頼が同じ人に連続しないようになっております [pr]",
+   "レビュー可能なユーザー　　　　[user+me]　or このチャネルで１時間以内オンライン \n#{users_list.join(', ')}",
+   "本日レビューできないユーザー　[user-me]　or [user-yamada, hanako] \n#{skip_users.join(', ')}",
+   "常にレビューできないユーザー　[user!-me] or [user!-yamada, hanako] \n#{never_users.join(', ')}```"]
 
 # ユーザーを更新する
 fetch_users = (robot) ->
