@@ -29,7 +29,9 @@
 
 request = require('request')
 cronJob = require('cron').CronJob
-fs      = require ('fs')
+fs      = require('fs')
+child_process = require('child_process')
+_ = require('lodash')
 
 select_num   = process.env.SELECT_NUM  || 2
 channel_name = process.env.CHANNEL     || 'random'
@@ -40,14 +42,19 @@ skip_cron    = process.env.SKIP_CRON   || '0    0   * * *'
 alert_cron   = process.env.ALERT_CRON  || '0   17   * * *'
 path         = process.env.JSON_PATH   || './db.json'
 token        = process.env.HUBOT_SLACK_TOKEN
+git_token    = process.env.GIT_API_TOKEN
+team_json_url = process.env.TEAM_JSON_URL
 
 module.exports = (robot) ->
   robot.brain.setAutoSave false
 
   load = ->
     robot.logger.info "load"
+    create_user_map(robot)
     data = JSON.parse fs.readFileSync path, encoding: 'utf-8'
     robot.brain.mergeData data
+    #user_map = JSON.parse fs.readFileSync './team.json', encoding: 'utf-8'
+    #robot.brain.mergeData {user_map: user_map}
     robot.brain.setAutoSave true
 
   save = (data) ->
@@ -65,7 +72,7 @@ module.exports = (robot) ->
     msg.send "\n#{config().join('\n')}"
 
   # レビュワーを選ぶ
-  robot.respond /pr/, (msg) =>
+  robot.respond /https:\/\/github.com\/(.*)\/(.*)\/pull\/(.*)/, (msg) =>
     users = get(robot, 'users')
     never_users = get(robot, 'never_users')
     skip_users = get(robot, 'skip_users')
@@ -80,9 +87,9 @@ module.exports = (robot) ->
     selected_users = random_fetch(users, select_num)
     for name in selected_users
       rm(robot, 'users', name)
-    message = ["こちらの#{select_num}名にレビューをお願いします。\n @#{selected_users.join(' @')}",
-               users_msg(robot).join('\n\n')+"```"]
+    message = [users_msg(robot).join('\n\n')]
     msg.send(message.join('\n'))
+    assign_users_with_url(msg.match[0], selected_users, msg, robot)
 
   # ユーザーをスキップ
   robot.respond /user-(.*)/, (msg) =>
@@ -207,6 +214,40 @@ check_online = (robot, user_id) ->
           robot.logger.info "Add:  #{user_name}" if users.indexOf(user_name) == -1
           users.push(user_name)
           robot.brain.set('users', uniq(users))
+
+assign_users_with_url = (url, assign_users, msg, robot) ->
+    pull_req = url.match(/https:\/\/github.com\/(.*)\/(.*)\/pull\/(.*)/)[1..3]
+    git_users = []
+    for assign_user in assign_users
+      git_user = find_git_user(robot, assign_user)
+      git_users.push(git_user) if git_user != null
+    msg.send("SlackとGitのID紐付けがありません @#{_.difference(assign_users, git_users).join(' @')}") if git_users.length < assign_users.length
+    post_users_json = "{\"assignees\": [\"#{git_users.join("\",\"")}\"]}"
+    git_api_uri = "curl -v -H 'Accept: application/json' -d \'#{post_users_json}\' -u #{find_git_user(robot, super_user)}:#{git_token} https://api.github.com/repos/#{pull_req[0]}/#{pull_req[1]}/issues/#{pull_req[2]}/assignees"
+    console.log git_api_uri
+    child_process.exec git_api_uri, (error, stdout, stderr) ->
+      res = JSON.parse(stdout)
+      msg.send("@#{assign_users.join(' @')}　こちらのレビューお願いします。\n*#{res.title}*\n#{url.match(/https:\/\/github.com\/(.*)\/(.*)\/pull\/(.*)/)[0]}\n")
+
+find_git_user = (robot, user_name) ->
+  user_map = get(robot, 'user_map')
+  user_id = null
+  for git_name, slack_name of user_map
+    user_id = git_name if user_name == slack_name
+  return user_id
+
+create_user_map = (robot) ->
+  team_json_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{team_json_url}"
+  child_process.exec team_json_api, (error, stdout, stderr) ->
+    download_url = JSON.parse(stdout)['download_url']
+    download_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{download_url}"
+    child_process.exec download_api, (error, stdout, stderr) ->
+      user_map = JSON.parse(stdout)
+      new_user_map = {}
+      for k,v of user_map
+        new_user_map[k[1..-1]] = v[2..-2]
+      console.log new_user_map
+      robot.brain.mergeData {user_map: new_user_map}
 
 get = (robot, key) ->
     return (robot.brain.get(key) || []).slice(0)
