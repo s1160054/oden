@@ -229,8 +229,12 @@ assign_users_with_url = (url, assign_users, msg, robot) ->
     git_users = []
     for assign_user in assign_users
       git_user = find_git_user(robot, assign_user)
-      git_users.push(git_user) if git_user != null
-    msg.send("SlackとGitのID紐付けがありません @#{_.difference(assign_users, git_users).join(' @')}") if git_users.length < assign_users.length
+      invalid_users = []
+      if git_user != null
+        git_users.push(git_user)
+      else
+        invalid_users.push(assign_user)
+    msg.send("SlackとGitのID紐付けがありません @#{invalid_users.join(' @')}") if invalid_users.length > 0
     post_users_json = "{\"assignees\": [\"#{git_users.join("\",\"")}\"]}"
     git_api_uri = "curl -v -H 'Accept: application/json' -d \'#{post_users_json}\' -u #{find_git_user(robot, super_user)}:#{git_token} https://api.github.com/repos/#{pull_req[0]}/#{pull_req[1]}/issues/#{pull_req[2]}/assignees"
     console.log git_api_uri
