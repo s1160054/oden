@@ -5,8 +5,9 @@ Bot宛に`PRのURL`を送信すると、レビュワーを２人選んでGithub�
 
 ## Features
 
- - Slack APIを使います
+ - SlackAPIとGithubAPIを使います
  - レビューチャネルのオンラインのユーザーを、ランダムに２人選びます
+ - SlackとGithubのID対応表はGit上のteam.jsonで取得します
  - 連続して同じ人にレビュー依頼しないように調整してます
  - 次のデータをRedis & JSONで保持します
    1. User
