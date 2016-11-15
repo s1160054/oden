@@ -233,6 +233,9 @@ find_git_user = (robot, user_name) ->
   user_map = get(robot, 'user_map')
   user_id = null
   for git_name, slack_name of user_map
+    console.log git_name
+    console.log slack_name
+    console.log user_name
     user_id = git_name if user_name == slack_name
   return user_id
 
