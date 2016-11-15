@@ -19,7 +19,8 @@
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^4.2.2",
     "request": "2.78.0",
-    "cron": "^1.1.0"
+    "cron": "^1.1.0",
+    "lodash", "4.11.1"
   },
   "engines": {
     "node": "0.10.x"
