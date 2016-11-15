@@ -1,6 +1,7 @@
 # Oden
 
-レビュワーを選ぶSlack用のBotおでん
+レビュワーを選ぶSlack用のBotおでん  
+Bot宛に`PRのURL`を送信すると、レビュワーを２人選んでGithubのAssigneesに追加します
 
 ## Features
 
@@ -19,7 +20,7 @@
 
 | Cmd | Description| Detail |
 |---|---| --- |
-| pr | レビュワーを選ぶ | |
+| プルリクのURL | レビュワーを二人選んでアサインする | |
 | users | ユーザーのステータス表示 |このチャネルで１時間以内オンラインかつ、<br>１０分以内にレビュー依頼していない |
 | user+(.*) | レビュー可能なユーザーに追加　|[user+me] or [user+yamada, hanako] |
 | user-(.*) | 本日レビューできないユーザー追加 |[user-me] or [user-yamada, hanako]  |
