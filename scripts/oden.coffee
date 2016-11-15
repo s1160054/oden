@@ -50,18 +50,27 @@ module.exports = (robot) ->
 
   load = ->
     robot.logger.info "load"
-    create_user_map(robot)
     data = JSON.parse fs.readFileSync path, encoding: 'utf-8'
     robot.brain.mergeData data
-    #user_map = JSON.parse fs.readFileSync './team.json', encoding: 'utf-8'
-    #robot.brain.mergeData {user_map: user_map}
     robot.brain.setAutoSave true
+
+  create_user_map = ->
+    robot.logger.info "create_user_map"
+    team_json_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{team_json_url}"
+    child_process.exec team_json_api, (error, stdout, stderr) ->
+      download_url = JSON.parse(stdout)['download_url']
+      download_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{download_url}"
+      child_process.exec download_api, (error, stdout, stderr) ->
+        user_map = JSON.parse(stdout)
+        for k, v of user_map
+          add(robot, v[2..-2], k[1..-1])
 
   save = (data) ->
     robot.logger.info "save"
     fs.writeFileSync path, JSON.stringify data
 
   robot.brain.on 'loaded', save
+  create_user_map()
   load()
 
   robot.logger.info config()
@@ -230,27 +239,7 @@ assign_users_with_url = (url, assign_users, msg, robot) ->
       msg.send("@#{assign_users.join(' @')}　こちらのレビューお願いします。\n*#{res.title}*\n#{url.match(/https:\/\/github.com\/(.*)\/(.*)\/pull\/(.*)/)[0]}\n")
 
 find_git_user = (robot, user_name) ->
-  user_map = get(robot, 'user_map')
-  user_id = null
-  for git_name, slack_name of user_map
-    console.log git_name
-    console.log slack_name
-    console.log user_name
-    user_id = git_name if user_name == slack_name
-  return user_id
-
-create_user_map = (robot) ->
-  team_json_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{team_json_url}"
-  child_process.exec team_json_api, (error, stdout, stderr) ->
-    download_url = JSON.parse(stdout)['download_url']
-    download_api = "curl -u #{find_git_user(robot, super_user)}:#{git_token} #{download_url}"
-    child_process.exec download_api, (error, stdout, stderr) ->
-      user_map = JSON.parse(stdout)
-      new_user_map = {}
-      for k,v of user_map
-        new_user_map[k[1..-1]] = v[2..-2]
-      console.log new_user_map
-      robot.brain.mergeData {user_map: new_user_map}
+  return robot.brain.get(user_name)
 
 get = (robot, key) ->
     return (robot.brain.get(key) || []).slice(0)
