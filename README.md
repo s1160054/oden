@@ -20,11 +20,11 @@
 | Cmd | Description| Detail |
 |---|---| --- |
 | pr | レビュワーを選ぶ | |
-| users | ユーザーのステータス表示 | このチャネルで１時間以内オンラインかつ、<br>１０分以内にレビュー依頼していない |
-| user+(.*) | レビュー可能なユーザーに追加　| [user+me]　or [user+yamada, hanako] |
-| user-(.*) | 本日レビューできないユーザー追加 |　[user-me]　or [user-yamada, hanako]  |
-| user!-(.*) | ユーザーを常にレビューできないようにする | [user!-me] or [user!-yamada, hanako] |
-| user!+(.*) | 常にレビューできないユーザーを復活 | [user!+me] or [user!+yamada, hanako] |
+| users | ユーザーのステータス表示 |このチャネルで１時間以内オンラインかつ、<br>１０分以内にレビュー依頼していない |
+| user+(.*) | レビュー可能なユーザーに追加　|[user+me] or [user+yamada, hanako] |
+| user-(.*) | 本日レビューできないユーザー追加 |[user-me] or [user-yamada, hanako]  |
+| user!-(.*) | ユーザーを常にレビューできないようにする |[user!-me] or [user!-yamada, hanako] |
+| user!+(.*) | 常にレビューできないユーザーを復活 |[user!+me] or [user!+yamada, hanako] |
 | config | botの設定を表示する | |
 
 ## Configuration
