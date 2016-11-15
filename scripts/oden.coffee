@@ -175,7 +175,7 @@ users_msg = (robot) ->
   users_list = get(robot, 'users')
   skip_users = get(robot, 'skip_users')
   never_users = get(robot, 'never_users')
-  ["```[プルリクのURL] => レビュワーを二人選んでアサインします\n１０分間レビュー依頼が同じ人に連続しないようになっております",
+  ["```[プルリクのURL] => レビュワーを二人選んでアサインします\n１０分間レビュー依頼が同じ人に連続しないようになっております\nhttps://github.com/s1160054/oden/blob/master/README.md",
    "レビュー可能なユーザー　　　　[user+me]　or このチャネルで１時間以内オンライン \n#{users_list.join(', ')}",
    "本日レビューできないユーザー　[user-me]　or [user-yamada, hanako] \n#{skip_users.join(', ')}",
    "常にレビューできないユーザー　[user!-me] or [user!-yamada, hanako] \n#{never_users.join(', ')}```"]
