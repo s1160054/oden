@@ -1,48 +1,82 @@
 # Oden
 
-レビュワーを選ぶSlack用のBotおでん
+Bot for Slack to select reviewers.  
+If you send the URL of PR to Bot, we will pick two reviewers and add them to Assignees of Github.
 
 ## Features
 
- - Slack APIを使います
- - レビューチャネルのオンラインのユーザーを、ランダムに２人選びます
- - 連続して同じ人にレビュー依頼しないように調整してます
- - 次のデータをRedis & JSONで保持します
-   1. User
-     - オンラインユーザーリスト
-   2. Skip
-     - その日はレビューをスキップする人リスト
-   3. Never
-     - これから先レビューしない人リスト
+- Use the Slack API and Github API.
+- Randomly select 2 online users for review channel.
+- Correspondence table of Slack and Github ID is obtained by team.json of Git.
+- Adjust so as not to consecutively make the same person reviewer.
+
+## Running oden Locally
+
+1.You can start oden locally by running:
+
+    git clone https://github.com/s1160054/oden.git
+    cd oden
+    HUBOT_SLACK_TOKEN=xxxx GIT_API_TOKEN=yyyy SUPER_USER=<your_slack_name> bin/hubot --adapter slack
+   
+
+2.Edit this file to correspond to your team member:  
+[team.json](https://github.com/s1160054/oden/blob/master/team.json)
+
+```json
+{
+  "your_github_user_name": "your_slack_name",
+  "sakuya": "izayoi.sakuya",
+  "yukari": "yukari.yakumo",
+  "meiling": "hong.meiling",
+  "reimu": "reimu.hakurei"
+}
+```
+
+Or if you want to make this JSON file private:
+
+Please put the json file for the team in github and do like this.
+
+    TEAM_JSON_URL=https://github.com/your_name/repo_name/blob/master/team.json
 
 ## Commands
 
-| Cmd | Description| Detail |
+| Cmd | Description|
 |---|---| --- |
-| pr | レビュワーを選ぶ | |
-| users | ユーザーのステータス表示 |このチャネルで１時間以内オンラインかつ、<br>１０分以内にレビュー依頼していない |
-| user+(.*) | レビュー可能なユーザーに追加　|[user+me] or [user+yamada, hanako] |
-| user-(.*) | 本日レビューできないユーザー追加 |[user-me] or [user-yamada, hanako]  |
-| user!-(.*) | ユーザーを常にレビューできないようにする |[user!-me] or [user!-yamada, hanako] |
-| user!+(.*) | 常にレビューできないユーザーを復活 |[user!+me] or [user!+yamada, hanako] |
-| config | botの設定を表示する | |
+| URL of Pull-request | **I choose two reviewers and assign them.** |
+| users | User's status display. |
+| user+(.\*) | Add to reviewable users.　 <br>*user+me*<br> *user+sakuya, reimu* |
+| user-(.\*) | Add users that can not be reviewed today. <br>*user-me*<br> *user-sakuya, reimu*  |
+| user!-(.\*) | Keep users from reviewing at all times. <br>*user!-me*<br> *user!-sakuya, reimu* |
+| user!+(.\*) | Always to revive the users who can not review. <br>*user!+me*<br> *user!+sakuya, reimu* |
+| config | Display the bot setting. |
 
 ## Configuration
 
-|Config Variable| Default value | Description|
+### Required
+
+|Config Variable| |
+|---|---|
+| HUBOT_SLACK_TOKEN | https://my.slack.com/apps/A0F7YS25R-bots |
+| GIT_API_TOKEN | https://github.com/settings/tokens |
+| SUPER_USER | **your_slack_name** |
+
+### Optional
+
+|Config Variable| Default value |
 |---|---|---|
-| CHANNEL | "random" | レビュワーのいるチャネル名 |
-| SELECT_NUM | 2 | レビューに必要な人数 |
-| FETCH_CRON | １０分毎 |  ユーザーのオンラインをチェックする間隔 |
-| SKIP_CRON | 毎日０時 | スキップされたユーザーを復活させる間隔 |
-| CLEAR_CRON | １時間毎 | オフラインユーザーをユーザーから外す間隔 |
-| JSON_PATH | ./db.json | 永続化用JSONファイルのパス |
-## Running oden Locally
+| CHANNEL | random <br> Name of the channel where the reviewer is located |
+| SELECT_NUM | Two persons(2) <br> Number of people required for review |
+| FETCH_CRON | Every 10 minutes('\*/10 \* \* \* \*') <br> Interval to check user's online |
+| SKIP_CRON | Daily 0:00('0 0 \* \* \*') <br> Interval to restore skipped users |
+| CLEAR_CRON | Every hour('0 \*/1 \* \* \*') <br> The interval to remove offline users from users|
+| ALERT_PATH | Daily 17:00('0 17 \* \* \*') <br> Periodic notification |
+| JSON_PATH | ./db.json <br> Path of JSON file for persistence |
+| TEAM_JSON_URL | ./team.json or https://github.com/your_name/repo_name/blob/master/team.json<br> ID linking Slack and GIt URL or Path |
+| REQUEST_WORDING | Please review this review. |
 
-You can start oden locally by running:
+## Install as a npm package
 
-    % bin/hubot --adapter slack
-
-You'll see some start up output and a prompt:
-
-    [Sat Feb 28 2015 12:38:27 GMT+0000 (GMT)] INFO Using default redis on localhost:6379 oden>
+```sh
+npm install oden-boy
+```
+> [oden-boy](https://www.npmjs.com/package/oden-boy)
