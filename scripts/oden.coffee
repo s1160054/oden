@@ -142,6 +142,7 @@ module.exports = (robot) ->
   new cronJob(clear_cron, () ->
     robot.brain.set('users', [])
     robot.logger.info "clear"
+    fetch_users(robot)
   ).start()
 
   # ユーザーリストを更新
