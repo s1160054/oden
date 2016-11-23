@@ -15,7 +15,7 @@
 #   ALERT_PATH - Periodic notification
 #   JSON_PATH  - Path of JSON file for persistence
 #   TEAM_JSON_URL - ID linking Slack and GIt URL or Path
-#   REQUEST_WORDING - Please review this review
+#   REQUEST_WORDING - Please review this pull request.
 #   HUBOT_SLACK_TOKEN
 #   GIT_API_TOKEN
 #   SUPER_USER
@@ -46,7 +46,7 @@ clear_cron    = process.env.CLEAR_CRON  || '0    */1 * * *'
 skip_cron     = process.env.SKIP_CRON   || '0    0   * * *'
 alert_cron    = process.env.ALERT_CRON  || '0   17   * * *'
 path          = process.env.JSON_PATH   || './db.json'
-request_wording = process.env.REQUEST_WORDING || 'Please review this review.'
+request_wording = process.env.REQUEST_WORDING || 'Please review this pull request.'
 token         = process.env.HUBOT_SLACK_TOKEN
 git_token     = process.env.GIT_API_TOKEN
 team_json_url = process.env.TEAM_JSON_URL || './team.json'
