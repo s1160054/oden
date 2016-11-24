@@ -1,50 +1,50 @@
 # Oden
 
-レビュワーを選ぶSlack用のBotおでん  
-Bot宛に`PRのURL`を送信すると、レビュワーを２人選んでGithubのAssigneesに追加します
+Bot for Slack to select reviewers.
+If you send the URL of PR to Bot, we will pick two reviewers and add them to Assignees of Github.
+
+```sh
+npm install oden-boy
+```
+> [oden-boy](https://www.npmjs.com/package/oden-boy)
+
+## Running oden Locally
+
+You can start oden locally by running:
+
+    % bin/hubot --adapter slack HUBOT_SLACK_TOKEN=xxxx GIT_API_TOKEN=yyyy
 
 ## Features
 
- - SlackAPIとGithubAPIを使います
- - レビューチャネルのオンラインのユーザーを、ランダムに２人選びます
- - SlackとGithubのID対応表はGit上のteam.jsonで取得します
- - 連続して同じ人にレビュー依頼しないように調整してます
- - 次のデータをRedis & JSONで保持します
-   1. User
-     - オンラインユーザーリスト
-   2. Skip
-     - その日はレビューをスキップする人リスト
-   3. Never
-     - これから先レビューしない人リスト
+- Use the Slack API and Github API.
+- Randomly select 2 online users for review channel.
+- Correspondence table of Slack and Github ID is obtained by team.json of Git.
+- Adjust so as not to consecutively make the same person reviewer.
 
 ## Commands
 
 | Cmd | Description| Detail |
 |---|---| --- |
-| プルリクのURL | レビュワーを二人選んでアサインする | |
-| users | ユーザーのステータス表示 |このチャネルで１時間以内オンラインかつ、<br>１０分以内にレビュー依頼していない |
-| user+(.*) | レビュー可能なユーザーに追加　|[user+me] or [user+yamada, hanako] |
-| user-(.*) | 本日レビューできないユーザー追加 |[user-me] or [user-yamada, hanako]  |
-| user!-(.*) | ユーザーを常にレビューできないようにする |[user!-me] or [user!-yamada, hanako] |
-| user!+(.*) | 常にレビューできないユーザーを復活 |[user!+me] or [user!+yamada, hanako] |
-| config | botの設定を表示する | |
+| Pull request URL | I choose two reviewers and assign them. | |
+| users | User's status display. | I have not requested a review online within this channel for less than 10 minutes. |
+| user+(.*) | Add to reviewable users.　| [user+me] or [user+yamada, hanako] |
+| user-(.*) | Add users that can not be reviewed today. | [user-me] or [user-yamada, hanako]  |
+| user!-(.*) | Keep users from reviewing at all times. | [user!-me] or [user!-yamada, hanako] |
+| user!+(.*) | Always to revive the users who can not review. | [user!+me] or [user!+yamada, hanako] |
+| config | Display the bot setting. | |
 
 ## Configuration
 
-|Config Variable| Default value | Description|
+|Config Variable| Default value and Description|
 |---|---|---|
-| CHANNEL | "random" | レビュワーのいるチャネル名 |
-| SELECT_NUM | 2 | レビューに必要な人数 |
-| FETCH_CRON | １０分毎 |  ユーザーのオンラインをチェックする間隔 |
-| SKIP_CRON | 毎日０時 | スキップされたユーザーを復活させる間隔 |
-| CLEAR_CRON | １時間毎 | オフラインユーザーをユーザーから外す間隔 |
-| JSON_PATH | ./db.json | 永続化用JSONファイルのパス |
-## Running oden Locally
-
-You can start oden locally by running:
-
-    % bin/hubot --adapter slack
-
-You'll see some start up output and a prompt:
-
-    [Sat Feb 28 2015 12:38:27 GMT+0000 (GMT)] INFO Using default redis on localhost:6379 oden>
+| CHANNEL | *random* <br> Name of the channel where the reviewer is located |
+| SELECT_NUM | *Two persons* <br> Number of people required for review |
+| FETCH_CRON | *Every 10 minutes* <br> Interval to check user's online |
+| SKIP_CRON | *Daily 0:00* <br> Interval to restore skipped users |
+| CLEAR_CRON | *Every hour* <br> The interval to remove offline users from users|
+| ALERT_PATH | *Every 1 day* <br> Periodic notification |
+| JSON_PATH | *./db.json* <br> Path of JSON file for persistence |
+| TEAM_JSON_URL | *./team.json*<br>or<br>*https://github.com/xxx/yyy/zzz/master/team.json*<br> ID linking Slack and GIt URL or Path |
+| REQUEST_WORDING | *Please review this review.* | |
+| HUBOT_SLACK_TOKEN | | |
+| GIT_API_TOKEN | | |

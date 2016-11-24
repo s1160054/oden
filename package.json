@@ -1,22 +1,16 @@
 {
-  "name": "oden",
-  "version": "0.0.0",
-  "private": true,
-  "author": "oden",
-  "description": "oden",
+  "name": "oden-boy",
+  "version": "0.1.6",
+  "private": false,
+  "author": {
+    "name": "yudai.onodera",
+    "email": "1160054@gmail.com"
+  },
+  "description": "Bot for Slack to select reviewers. If you send the URL of PR to Bot, we will pick two reviewers and add them to Assignees of Github.",
   "dependencies": {
     "hubot": "^2.19.0",
-    "hubot-diagnostics": "0.0.1",
-    "hubot-google-images": "^0.2.6",
-    "hubot-google-translate": "^0.2.0",
-    "hubot-help": "^0.2.0",
-    "hubot-heroku-keepalive": "^1.0.2",
-    "hubot-maps": "0.0.2",
-    "hubot-pugme": "^0.1.0",
     "hubot-redis-brain": "0.0.3",
-    "hubot-rules": "^0.1.1",
     "hubot-scripts": "^2.17.2",
-    "hubot-shipit": "^0.2.0",
     "hubot-slack": "^4.2.2",
     "request": "2.78.0",
     "cron": "^1.1.0",
@@ -24,5 +18,18 @@
   },
   "engines": {
     "node": "0.10.x"
-  }
+  },
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com.oden:s1160054/oden.git"
+  },
+  "keywords": [
+    "slack", "github", "reviewer", "pull-request", "assign", "hubot"
+  ],
+  "license": "MIT"
 }
