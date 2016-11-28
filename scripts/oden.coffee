@@ -50,6 +50,7 @@ request_wording = process.env.REQUEST_WORDING || 'Please review this pull reques
 token         = process.env.HUBOT_SLACK_TOKEN
 git_token     = process.env.GIT_API_TOKEN
 team_json_url = process.env.TEAM_JSON_URL || './team.json'
+never_users   = process.env.NEVER_USERS || ''
 
 module.exports = (robot) ->
   robot.brain.setAutoSave false
@@ -87,6 +88,8 @@ module.exports = (robot) ->
 
   robot.logger.info config()
   fetch_users(robot)
+  rm(robot, 'users', never_users)
+  add(robot, 'never_users', never_users)
 
   # Display the bot setting.
   robot.respond /config/, (msg) =>
