@@ -1,6 +1,6 @@
 # Oden
 
-Bot for Slack to select reviewers.  
+Bot for Slack to select reviewers.
 If you send the URL of PR to Bot, we will pick two reviewers and add them to Assignees of Github.
 
 ## Features
@@ -16,10 +16,10 @@ If you send the URL of PR to Bot, we will pick two reviewers and add them to Ass
 
     git clone https://github.com/s1160054/oden.git
     cd oden
-    HUBOT_SLACK_TOKEN=xxxx GIT_API_TOKEN=yyyy SUPER_USER=<your_slack_name> bin/hubot --adapter slack
-   
+    HUBOT_SLACK_TOKEN=xxxx GIT_API_TOKEN=yyyy NAME_OF_ADMINS_GIT=<your_git_name> bin/hubot --adapter slack
 
-2.Edit this file to correspond to your team member:  
+
+2.Edit this file to correspond to your team member:
 [team.json](https://github.com/s1160054/oden/blob/master/team.json)
 
 ```json
@@ -58,21 +58,22 @@ Please put the json file for the team in github and do like this.
 |---|---|
 | HUBOT_SLACK_TOKEN | https://my.slack.com/apps/A0F7YS25R-bots |
 | GIT_API_TOKEN | https://github.com/settings/tokens |
-| SUPER_USER | **your_slack_name** |
+| NAME_OF_ADMINS_GIT | **your_git_name** |
 
 ### Optional
 
 |Config Variable| Default value |
 |---|---|---|
-| CHANNEL | random <br> Name of the channel where the reviewer is located |
-| SELECT_NUM | Two persons(2) <br> Number of people required for review |
-| FETCH_CRON | Every 10 minutes('\*/10 \* \* \* \*') <br> Interval to check user's online |
-| SKIP_CRON | Daily 0:00('0 0 \* \* \*') <br> Interval to restore skipped users |
-| CLEAR_CRON | Every hour('0 \*/1 \* \* \*') <br> The interval to remove offline users from users|
-| ALERT_PATH | Daily 17:00('0 17 \* \* \*') <br> Periodic notification |
-| JSON_PATH | ./db.json <br> Path of JSON file for persistence |
+| REVIEW_CHANNEL | random <br> Name of the channel where the reviewer is located |
+| NUMBER_OF_REVIEWERES | Two persons(2) <br> Number of people required for review |
+| FETCH_INTERVAL | Every 10 minutes('0 \*/10 \* \* \* \*') <br> Interval to check user's online |
+| SKIP_INTERVAL | Daily 0:00('0 0 0 \* \* \*') <br> Interval to restore skipped users |
+| CLEAR_INTERVAL | Every hour('0 59 \* \* \* \*') <br> The interval to remove offline users from users|
+| ALERT_INTERVAL | Daily 17:00('0 14 \* \* \* \*') <br> Periodic notification |
+| DB_PATH | ./db.json <br> Path of JSON file for persistence |
 | TEAM_JSON_URL | ./team.json or https://github.com/your_name/repo_name/blob/master/team.json<br> ID linking Slack and GIt URL or Path |
-| REQUEST_WORDING | Please review this review. |
+| REQUEST_WORDING | Please review this pull request |
+| NEVER_USERS | Keep users from reviewing at all times |
 
 ## Install as a npm package
 
