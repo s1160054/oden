@@ -65,7 +65,7 @@ module.exports = (robot) ->
     if fs.existsSync team_json_url
       user_map = JSON.parse fs.readFileSync team_json_url, encoding: 'utf-8'
       for k, v of user_map
-        add(robot, '_'+v.replace(/[@\<\>]/g, ""), k.replace(/[@\<\>]/g, ""))
+        add(robot, '_'+v.replace(/[@\<\>\_]/g, ""), k.replace(/[@\<\>]/g, ""))
     else
       t = team_json_url.match(/(https:\/\/github.com)\/(.*)\/(.*)\/(.*)\/(.*)/)
       api_url = "https://api.github.com/repos/#{t[2]}/contents/#{t[5]}"
@@ -76,7 +76,7 @@ module.exports = (robot) ->
         child_process.exec download_api, (error, stdout, stderr) ->
           user_map = JSON.parse(stdout)
           for k, v of user_map
-            add(robot, '_'+v.replace(/[@\<\>]/g, ""), k.replace(/[@\<\>]/g, ""))
+            add(robot, '_'+v.replace(/[@\<\>\_]/g, ""), k.replace(/[@\<\>]/g, ""))
 
   save = (data) ->
     fs.writeFileSync path, JSON.stringify data
@@ -192,9 +192,9 @@ users_msg = (robot) ->
   skip_users = get(robot, 'skip_users')
   never_users = get(robot, 'never_users')
   ["```[Pull request URL] => I choose two reviewers and assign them.\nThe review request has been made not to be continuous to the same person for 10 minutes.\nhttps://github.com/s1160054/oden/blob/master/README.md",
-   "Reviewable users　　　　[user+me]\n _#{users_list.join(' _')}",
-   "Users who can not be reviewed today　[user-me]\n_#{skip_users.join(' _')}",
-   "Users who can not always review　[user!-me]\n_#{never_users.join(' _')}```"]
+   "Reviewable users => user+me\n@#{users_list.join(' @')}",
+   "Users who can not be reviewed today => user-me\n@#{skip_users.join(' @')}",
+   "Users who can not always review => user!-me\n@#{never_users.join(' @')}```"]
 
 # Update users
 fetch_users = (robot) ->
@@ -243,9 +243,9 @@ check_online = (robot, user_id) ->
 assign_users_with_url = (url, assign_users, msg, robot) ->
     pull_req = url.match(/https:\/\/github.com\/(.*)\/(.*)\/pull\/(.*)/)[1..3]
     git_users = []
+    invalid_users = []
     for assign_user in assign_users
       git_user = find_git_user(robot, assign_user)
-      invalid_users = []
       if git_user != null
         git_users.push(git_user)
       else
