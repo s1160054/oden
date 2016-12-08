@@ -77,10 +77,10 @@ module.exports = (robot) ->
     else
       t = public_config.team_json_url.match(/(https:\/\/github.com)\/(.*)\/(.*)\/(.*)\/(.*)/)
       api_url = "https://api.github.com/repos/#{t[2]}/contents/#{t[5]}"
-      team_json_api = "curl -u #{find_git_user(robot, private_config.name_of_admins_git)}:#{private_config.git_api_token} #{api_url}"
+      team_json_api = "curl -u #{private_config.name_of_admins_git}:#{private_config.git_api_token} #{api_url}"
       child_process.exec team_json_api, (error, stdout, stderr) ->
         download_url = JSON.parse(stdout)['download_url']
-        download_api = "curl -u #{find_git_user(robot, private_config.name_of_admins_git)}:#{private_config.git_api_token} #{download_url}"
+        download_api = "curl -u #{private_config.name_of_admins_git}:#{private_config.git_api_token} #{download_url}"
         child_process.exec download_api, (error, stdout, stderr) ->
           user_map = JSON.parse(stdout)
           for k, v of user_map
